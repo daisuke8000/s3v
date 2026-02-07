@@ -1,0 +1,17 @@
+[package]
+name = "s3v"
+version = "0.1.0"
+edition = "2024"
+description = "A read-only s3 browser TUI"
+license = "MIT"
+keywords = ["s3", "aws", "browser", "tui"]
+
+[dependencies]
+ratatui = "0.30.0"
+crossterm = "0.29.0"
+aws-sdk-s3 = "1.122.0"
+aws-config = "1.8.13"
+tokio = { version = "1", features = ["full"] }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1.0.101"
+thiserror = "2.0.18"
