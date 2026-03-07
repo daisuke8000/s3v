@@ -4,91 +4,148 @@ pub mod theme;
 
 use ratatui::{
     Frame,
-    layout::Alignment,
-    style::{Color, Modifier, Style},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
 };
 
 use crate::app::{App, Mode};
 use crate::s3::S3Item;
 
 use layout::AppLayout;
+use theme::theme;
 
 /// メイン描画関数（純粋関数）
 pub fn render(app: &App, frame: &mut Frame) {
-    let layout = AppLayout::new(frame.area());
+    if app.show_banner {
+        let layout = AppLayout::banner(frame.area());
+        if let AppLayout::Banner { area } = layout {
+            banner::render_banner(frame, area);
+        }
+        return;
+    }
 
-    render_header(app, frame, layout.header);
-    render_filter(app, frame, layout.filter);
-    render_list(app, frame, layout.list);
-    render_url_bar(app, frame, layout.url_bar);
-    render_help(frame, layout.help);
+    let layout = AppLayout::normal(frame.area());
+    if let AppLayout::Normal {
+        header,
+        list,
+        footer,
+    } = layout
+    {
+        render_header(app, frame, header);
+        render_list(app, frame, list);
+        render_footer(app, frame, footer);
+    }
 }
 
-fn render_header(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
-    let path_str = format!("{}", app.current_path);
-    let title = format!(
-        " s3v | {} ",
-        if path_str.is_empty() { "/" } else { &path_str }
-    );
+fn render_header(app: &App, frame: &mut Frame, area: Rect) {
+    let t = theme();
 
-    let header = Paragraph::new(title).style(
-        Style::default()
-            .fg(Color::Cyan)
-            .add_modifier(Modifier::BOLD),
-    );
+    let breadcrumb = build_breadcrumb(app);
+
+    let header_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(t.border_fg))
+        .title(Span::styled(
+            " s3v ",
+            Style::default()
+                .fg(t.header_fg)
+                .add_modifier(Modifier::BOLD),
+        ));
+
+    let header = Paragraph::new(breadcrumb).block(header_block);
 
     frame.render_widget(header, area);
 }
 
-fn render_filter(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
-    let status = match app.mode {
-        Mode::Loading => "Loading...".to_string(),
-        Mode::Normal => format!("{} items", app.items.len()),
-    };
+fn build_breadcrumb(app: &App) -> Line<'static> {
+    let t = theme();
+    let sep = Span::styled(" › ", Style::default().fg(t.separator_fg));
 
-    let filter = Paragraph::new(format!(" Filter: | {} ", status))
-        .style(Style::default().fg(Color::DarkGray));
+    let mut spans = vec![Span::styled("/", Style::default().fg(t.breadcrumb_fg))];
 
-    frame.render_widget(filter, area);
+    if let Some(bucket) = &app.current_path.bucket {
+        spans.push(sep.clone());
+        spans.push(Span::styled(
+            bucket.clone(),
+            Style::default().fg(t.breadcrumb_fg),
+        ));
+
+        if !app.current_path.prefix.is_empty() {
+            for part in app.current_path.prefix.split('/').filter(|s| !s.is_empty()) {
+                spans.push(sep.clone());
+                spans.push(Span::styled(
+                    part.to_string(),
+                    Style::default().fg(t.breadcrumb_fg),
+                ));
+            }
+            spans.push(Span::styled("/", Style::default().fg(t.separator_fg)));
+        }
+    }
+
+    let item_count = format!("  {} items", app.items.len());
+    spans.push(Span::styled(
+        item_count,
+        Style::default().fg(t.item_count_fg),
+    ));
+
+    Line::from(spans)
 }
 
-fn render_list(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
+fn render_list(app: &App, frame: &mut Frame, area: Rect) {
+    let t = theme();
+
     let items: Vec<ListItem> = app
         .items
         .iter()
-        .map(|item| {
-            let (icon, name, size, date) = format_item(item);
+        .enumerate()
+        .map(|(i, item)| {
+            let is_selected = i == app.cursor;
+            let (icon, name, size, date) = format_item(item, is_selected);
             let line = Line::from(vec![
-                Span::raw(format!(" {} ", icon)),
                 Span::styled(
-                    format!("{:<40}", name),
+                    format!(" {} ", icon),
                     Style::default().fg(if item.is_folder() {
-                        Color::Blue
+                        t.folder_fg
                     } else {
-                        Color::White
+                        t.file_fg
                     }),
                 ),
                 Span::styled(
-                    format!("{:>10}", size),
-                    Style::default().fg(Color::DarkGray),
+                    format!("{:<40}", name),
+                    Style::default().fg(if item.is_folder() {
+                        t.folder_fg
+                    } else {
+                        t.file_fg
+                    }),
                 ),
+                Span::styled(format!("{:>10}", size), Style::default().fg(t.size_fg)),
                 Span::raw("  "),
-                Span::styled(date, Style::default().fg(Color::DarkGray)),
+                Span::styled(date, Style::default().fg(t.date_fg)),
             ]);
             ListItem::new(line)
         })
         .collect();
 
-    let list = List::new(items)
-        .block(Block::default().borders(Borders::NONE))
-        .highlight_style(
-            Style::default()
-                .bg(Color::DarkGray)
-                .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol("> ");
+    let status = match app.mode {
+        Mode::Loading => " Loading... ".to_string(),
+        Mode::Normal => String::new(),
+    };
+
+    let list_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(t.border_fg))
+        .title(Span::styled(status, Style::default().fg(t.header_fg)));
+
+    let list = List::new(items).block(list_block).highlight_style(
+        Style::default()
+            .bg(t.highlight_bg)
+            .fg(t.highlight_fg)
+            .add_modifier(Modifier::BOLD),
+    );
 
     let mut state = ListState::default();
     state.select(Some(app.cursor));
@@ -96,7 +153,15 @@ fn render_list(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
     frame.render_stateful_widget(list, area, &mut state);
 }
 
-fn render_url_bar(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
+fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
+    let t = theme();
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Length(2)])
+        .split(area);
+
+    // URL バー
     let url = if let Some(item) = app.selected_item() {
         let path = match item {
             S3Item::Bucket { name } => crate::s3::S3Path::bucket(name),
@@ -114,29 +179,47 @@ fn render_url_bar(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
         app.current_path.to_s3_uri()
     };
 
-    let url_bar = Paragraph::new(format!(" {}", url)).style(Style::default().fg(Color::Green));
+    let url_bar = Paragraph::new(format!(" {}", url)).style(Style::default().fg(t.url_fg));
+    frame.render_widget(url_bar, chunks[0]);
 
-    frame.render_widget(url_bar, area);
+    // ヘルプバー
+    let help = Line::from(vec![
+        Span::styled(" ↑↓", Style::default().fg(t.help_key_fg)),
+        Span::styled("/", Style::default().fg(t.separator_fg)),
+        Span::styled("jk", Style::default().fg(t.help_key_fg)),
+        Span::styled(" Move  ", Style::default().fg(t.help_fg)),
+        Span::styled("⏎", Style::default().fg(t.help_key_fg)),
+        Span::styled(" Open  ", Style::default().fg(t.help_fg)),
+        Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+        Span::styled(" Back  ", Style::default().fg(t.help_fg)),
+        Span::styled("q", Style::default().fg(t.help_key_fg)),
+        Span::styled(" Quit", Style::default().fg(t.help_fg)),
+    ]);
+
+    let help_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(t.border_fg));
+
+    let help_bar = Paragraph::new(help)
+        .block(help_block)
+        .alignment(Alignment::Center);
+    frame.render_widget(help_bar, chunks[1]);
 }
 
-fn render_help(frame: &mut Frame, area: ratatui::layout::Rect) {
-    let help = Paragraph::new(" [up/down or jk]Move [Enter]Open [Esc]Back [q]Quit")
-        .style(Style::default().fg(Color::DarkGray))
-        .alignment(Alignment::Left);
+fn format_item(item: &S3Item, is_selected: bool) -> (String, String, String, String) {
+    let folder_icon = if is_selected { "▶" } else { "▸" };
+    let file_icon = if is_selected { "▶" } else { "·" };
 
-    frame.render_widget(help, area);
-}
-
-fn format_item(item: &S3Item) -> (String, String, String, String) {
     match item {
         S3Item::Bucket { name } => (
-            "DIR".to_string(),
+            folder_icon.to_string(),
             name.clone(),
             String::new(),
             String::new(),
         ),
         S3Item::Folder { name, .. } => (
-            "DIR".to_string(),
+            folder_icon.to_string(),
             name.clone(),
             String::new(),
             String::new(),
@@ -147,7 +230,7 @@ fn format_item(item: &S3Item) -> (String, String, String, String) {
             last_modified,
             ..
         } => (
-            "   ".to_string(),
+            file_icon.to_string(),
             name.clone(),
             format_size(*size),
             last_modified
@@ -175,6 +258,5 @@ fn format_size(bytes: u64) -> String {
 }
 
 fn format_date(date: &str) -> String {
-    // AWS SDK returns ISO 8601 format, extract date part
     date.split('T').next().unwrap_or(date).to_string()
 }
