@@ -1,3 +1,4 @@
+pub mod banner;
 pub mod layout;
 pub mod theme;
 
