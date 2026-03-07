@@ -3,6 +3,7 @@ pub mod command;
 pub mod error;
 pub mod event;
 pub mod s3;
+pub mod ui;
 
 pub use app::{App, Mode};
 pub use command::Command;
