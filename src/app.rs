@@ -25,6 +25,8 @@ pub struct App {
     pub mode: Mode,
     /// 実行中フラグ
     pub running: bool,
+    /// 起動バナー表示フラグ
+    pub show_banner: bool,
 }
 
 impl Default for App {
@@ -41,6 +43,7 @@ impl App {
             cursor: 0,
             mode: Mode::Loading,
             running: true,
+            show_banner: true,
         }
     }
 
@@ -79,6 +82,7 @@ impl App {
                 items,
                 cursor: 0,
                 mode: Mode::Normal,
+                show_banner: false,
                 ..self
             },
             None,

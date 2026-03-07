@@ -162,3 +162,15 @@ fn test_app_quit() {
     assert!(!app.running);
     assert!(matches!(cmd, Some(Command::Quit)));
 }
+
+#[test]
+fn test_app_banner_hidden_after_items_loaded() {
+    let app = App::new();
+    assert!(app.show_banner, "Banner should show on startup");
+
+    let items = vec![S3Item::Bucket {
+        name: "bucket-1".to_string(),
+    }];
+    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
+    assert!(!app.show_banner, "Banner should hide after items loaded");
+}
