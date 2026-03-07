@@ -1,11 +1,11 @@
 pub mod layout;
 
 use ratatui::{
+    Frame,
     layout::Alignment,
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
 
 use crate::app::{App, Mode};
@@ -31,8 +31,11 @@ fn render_header(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
         if path_str.is_empty() { "/" } else { &path_str }
     );
 
-    let header = Paragraph::new(title)
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+    let header = Paragraph::new(title).style(
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD),
+    );
 
     frame.render_widget(header, area);
 }
@@ -65,7 +68,10 @@ fn render_list(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
                         Color::White
                     }),
                 ),
-                Span::styled(format!("{:>10}", size), Style::default().fg(Color::DarkGray)),
+                Span::styled(
+                    format!("{:>10}", size),
+                    Style::default().fg(Color::DarkGray),
+                ),
                 Span::raw("  "),
                 Span::styled(date, Style::default().fg(Color::DarkGray)),
             ]);
@@ -106,8 +112,7 @@ fn render_url_bar(app: &App, frame: &mut Frame, area: ratatui::layout::Rect) {
         app.current_path.to_s3_uri()
     };
 
-    let url_bar =
-        Paragraph::new(format!(" {}", url)).style(Style::default().fg(Color::Green));
+    let url_bar = Paragraph::new(format!(" {}", url)).style(Style::default().fg(Color::Green));
 
     frame.render_widget(url_bar, area);
 }
@@ -122,10 +127,18 @@ fn render_help(frame: &mut Frame, area: ratatui::layout::Rect) {
 
 fn format_item(item: &S3Item) -> (String, String, String, String) {
     match item {
-        S3Item::Bucket { name } => ("DIR".to_string(), name.clone(), String::new(), String::new()),
-        S3Item::Folder { name, .. } => {
-            ("DIR".to_string(), name.clone(), String::new(), String::new())
-        }
+        S3Item::Bucket { name } => (
+            "DIR".to_string(),
+            name.clone(),
+            String::new(),
+            String::new(),
+        ),
+        S3Item::Folder { name, .. } => (
+            "DIR".to_string(),
+            name.clone(),
+            String::new(),
+            String::new(),
+        ),
         S3Item::File {
             name,
             size,

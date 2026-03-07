@@ -41,10 +41,7 @@ impl S3Path {
 
         let trimmed = self.prefix.trim_end_matches('/');
         match trimmed.rfind('/') {
-            Some(pos) => Some(S3Path::with_prefix(
-                bucket,
-                &trimmed[..=pos],
-            )),
+            Some(pos) => Some(S3Path::with_prefix(bucket, &trimmed[..=pos])),
             None => Some(S3Path::bucket(bucket)),
         }
     }

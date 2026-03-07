@@ -65,10 +65,7 @@ impl S3Client {
         // Common prefixes (folders)
         for prefix in resp.common_prefixes() {
             if let Some(p) = prefix.prefix() {
-                let name = p
-                    .strip_prefix(&path.prefix)
-                    .unwrap_or(p)
-                    .to_string();
+                let name = p.strip_prefix(&path.prefix).unwrap_or(p).to_string();
                 items.push(S3Item::Folder {
                     name: name.clone(),
                     prefix: p.to_string(),
@@ -84,10 +81,7 @@ impl S3Client {
                     continue;
                 }
 
-                let name = key
-                    .strip_prefix(&path.prefix)
-                    .unwrap_or(key)
-                    .to_string();
+                let name = key.strip_prefix(&path.prefix).unwrap_or(key).to_string();
 
                 // Skip folder markers
                 if name.is_empty() || name.ends_with('/') {
