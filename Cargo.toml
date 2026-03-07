@@ -13,5 +13,7 @@ aws-sdk-s3 = "1.122.0"
 aws-config = "1.8.13"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }
+ansi-to-tui = "8.0.1"
 anyhow = "1.0.101"
 thiserror = "2.0.18"
+tui-banner = "0.2.3"
