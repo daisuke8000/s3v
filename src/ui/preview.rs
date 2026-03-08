@@ -3,7 +3,7 @@ use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
     text::Span,
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Paragraph, Wrap},
 };
 use ratatui_image::StatefulImage;
 use ratatui_image::protocol::StatefulProtocol;
@@ -20,16 +20,12 @@ pub fn render_preview(
     image_state: Option<&mut StatefulProtocol>,
 ) {
     let t = theme();
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(t.border_fg))
-        .title(Span::styled(
-            " Preview ",
-            Style::default()
-                .fg(t.header_fg)
-                .add_modifier(Modifier::BOLD),
-        ));
+    let block = t.block().title(Span::styled(
+        " Preview ",
+        Style::default()
+            .fg(t.header_fg)
+            .add_modifier(Modifier::BOLD),
+    ));
 
     match &app.preview_content {
         Some(PreviewContent::Text(content)) => {

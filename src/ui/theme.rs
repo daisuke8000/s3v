@@ -1,4 +1,5 @@
-use ratatui::style::Color;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, BorderType, Borders};
 
 /// アプリケーション全体のカラーテーマ
 pub struct Theme {
@@ -36,6 +37,16 @@ impl Default for Theme {
             border_fg: Color::Rgb(80, 80, 120),
             item_count_fg: Color::DarkGray,
         }
+    }
+}
+
+impl Theme {
+    /// 標準的な角丸ボーダーブロックを生成
+    pub fn block(&self) -> Block<'static> {
+        Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(self.border_fg))
     }
 }
 

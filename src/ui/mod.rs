@@ -8,7 +8,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{List, ListItem, ListState, Paragraph},
 };
 use ratatui_image::protocol::StatefulProtocol;
 
@@ -64,16 +64,12 @@ fn render_header(app: &App, frame: &mut Frame, area: Rect) {
 
     let breadcrumb = build_breadcrumb(app);
 
-    let header_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(t.border_fg))
-        .title(Span::styled(
-            " s3v ",
-            Style::default()
-                .fg(t.header_fg)
-                .add_modifier(Modifier::BOLD),
-        ));
+    let header_block = t.block().title(Span::styled(
+        " s3v ",
+        Style::default()
+            .fg(t.header_fg)
+            .add_modifier(Modifier::BOLD),
+    ));
 
     let header = Paragraph::new(breadcrumb).block(header_block);
 
@@ -173,10 +169,8 @@ fn render_list(app: &App, frame: &mut Frame, area: Rect) {
         _ => String::new(),
     };
 
-    let list_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(t.border_fg))
+    let list_block = t
+        .block()
         .title(Span::styled(status, Style::default().fg(t.header_fg)));
 
     let list = List::new(items).block(list_block).highlight_style(
@@ -295,10 +289,7 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
         )]),
     };
 
-    let help_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(t.border_fg));
+    let help_block = t.block();
 
     let help_bar = Paragraph::new(help)
         .block(help_block)
