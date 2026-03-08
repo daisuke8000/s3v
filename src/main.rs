@@ -1,16 +1,19 @@
 use std::io;
-use std::time::Duration;
 
 use clap::Parser;
 use crossterm::{
-    event::{self, Event as CrosstermEvent, KeyEventKind},
+    event::{EventStream, KeyEventKind},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use futures::StreamExt;
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_image::picker::Picker;
+use tokio::sync::mpsc;
 
-use s3v::command_handler::{PreviewState, dispatch_event, handle_load_preview, update_pdf_page};
+use s3v::command_handler::{
+    PreviewState, dispatch_event, setup_pdf_worker, start_preview_load, update_pdf_page,
+};
 use s3v::{App, Cli, Command, Event, S3Client};
 
 #[tokio::main]
@@ -88,6 +91,12 @@ async fn run_app(
     let mut preview = PreviewState::new();
     let mut metadata_index: Option<s3v::search::MetadataIndex> = None;
 
+    // ストリーミングイベント用チャネル
+    let (stream_tx, mut stream_rx) = mpsc::unbounded_channel::<Event>();
+
+    // crossterm EventStream（非同期キーイベント）
+    let mut event_stream = EventStream::new();
+
     loop {
         // PDF ページ変更検知 → 再レンダリング
         update_pdf_page(app, &mut preview, picker).await;
@@ -95,113 +104,130 @@ async fn run_app(
         // 描画
         terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
 
-        // イベント待機
-        if event::poll(Duration::from_millis(100))?
-            && let CrosstermEvent::Key(key) = event::read()?
-        {
-            // KeyPress のみ処理（KeyRelease は無視）
-            if key.kind != KeyEventKind::Press {
-                continue;
-            }
-
-            let event = match app.mode {
-                s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => Event::Key(key),
-                _ => Event::from_key(key),
-            };
-            let cmd = dispatch_event(app, event);
-
-            // Preview モードを抜けたらプレビュー状態をクリア
-            if app.mode != s3v::Mode::Preview {
-                preview.clear();
-            }
-
-            // Loading 状態なら即座に再描画（ブロッキング処理前に表示更新）
-            if app.mode == s3v::Mode::Loading {
-                terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
-            }
-
-            // コマンド実行（副作用はここで処理）
-            if let Some(cmd) = cmd {
-                match cmd {
-                    Command::Quit => break,
-                    Command::Download {
-                        bucket,
-                        key,
-                        destination,
-                    } => {
-                        if let Err(e) = s3v::download::download_file(
-                            s3_client.inner(),
-                            &bucket,
-                            &key,
-                            &destination,
-                        )
-                        .await
-                        {
-                            dispatch_event(app, Event::Error(format!("Download error: {}", e)));
-                        }
-                    }
-                    Command::LoadPreview { bucket, key } => {
-                        handle_load_preview(app, s3_client, picker, &mut preview, &bucket, &key)
-                            .await;
-                    }
-                    Command::LoadItems(path) => {
-                        match s3_client.list(&path).await {
-                            Ok(items) => {
-                                dispatch_event(app, Event::ItemsLoaded(items));
-
-                                // バケットに入った時にメタデータインデックスを構築
-                                if let Some(bucket) = &app.current_path.bucket
-                                    && !app.metadata_indexed
-                                    && let Ok(all_items) = s3_client.list_all_objects(bucket).await
-                                    && let Ok(index) = s3v::search::MetadataIndex::new()
-                                    && let Ok(count) = index.insert_items(&all_items)
-                                {
-                                    metadata_index = Some(index);
-                                    dispatch_event(app, Event::MetadataIndexed(count));
-                                }
-                            }
-                            Err(e) => {
-                                dispatch_event(
-                                    app,
-                                    Event::Error(format!("Failed to load items: {}", e)),
-                                );
-                            }
-                        }
-                    }
-                    Command::IndexMetadata { bucket } => {
-                        if let Ok(all_items) = s3_client.list_all_objects(&bucket).await
-                            && let Ok(index) = s3v::search::MetadataIndex::new()
-                            && let Ok(count) = index.insert_items(&all_items)
-                        {
-                            metadata_index = Some(index);
-                            dispatch_event(app, Event::MetadataIndexed(count));
-                        }
-                    }
-                    Command::ExecuteSearch(where_clause) => {
-                        if let Some(ref index) = metadata_index {
-                            match index.search(&where_clause) {
-                                Ok(results) => {
-                                    dispatch_event(app, Event::SearchResults(results));
-                                }
-                                Err(e) => {
-                                    dispatch_event(
-                                        app,
-                                        Event::Error(format!("Search error: {}", e)),
-                                    );
-                                }
-                            }
-                        } else {
-                            dispatch_event(
-                                app,
-                                Event::Error("Metadata not indexed yet".to_string()),
-                            );
-                        }
+        // 非同期イベント待機: キー入力 or ストリーミングイベント
+        tokio::select! {
+            Some(stream_event) = stream_rx.recv() => {
+                if matches!(&stream_event, Event::PreviewImageReady) {
+                    // 共有スロットからデコード済み画像を取り出し、picker で変換
+                    if let Some(dyn_img) = preview.take_decoded_image() {
+                        preview.image_state = Some(picker.new_resize_protocol(dyn_img));
                     }
                 }
+                if matches!(&stream_event, Event::PdfDataReady) {
+                    // PDF データスロットから取り出し、PdfWorker をセットアップ
+                    setup_pdf_worker(app, picker, &mut preview).await;
+                }
+                let cmd = dispatch_event(app, stream_event);
+                handle_command(app, s3_client, &mut preview, &mut metadata_index, &stream_tx, cmd).await?;
             }
+            Some(Ok(crossterm_event)) = event_stream.next() => {
+                if let crossterm::event::Event::Key(key) = crossterm_event {
+                    if key.kind != KeyEventKind::Press {
+                        continue;
+                    }
 
-            if !app.running {
-                break;
+                    let event = match app.mode {
+                        s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => Event::Key(key),
+                        _ => Event::from_key(key),
+                    };
+                    let cmd = dispatch_event(app, event);
+
+                    // Preview モードを抜けたらプレビュー状態をクリア
+                    if app.mode != s3v::Mode::Preview {
+                        preview.clear();
+                    }
+
+                    // Loading 状態なら即座に再描画
+                    if app.mode == s3v::Mode::Loading {
+                        terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
+                    }
+
+                    handle_command(app, s3_client, &mut preview, &mut metadata_index, &stream_tx, cmd).await?;
+                }
+            }
+        }
+
+        if !app.running {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+/// コマンド実行（副作用はここで処理）
+async fn handle_command(
+    app: &mut App,
+    s3_client: &S3Client,
+    preview: &mut PreviewState,
+    metadata_index: &mut Option<s3v::search::MetadataIndex>,
+    stream_tx: &mpsc::UnboundedSender<Event>,
+    cmd: Option<Command>,
+) -> anyhow::Result<()> {
+    let Some(cmd) = cmd else {
+        return Ok(());
+    };
+
+    match cmd {
+        Command::Quit => {
+            app.running = false;
+        }
+        Command::Download {
+            bucket,
+            key,
+            destination,
+        } => {
+            if let Err(e) =
+                s3v::download::download_file(s3_client.inner(), &bucket, &key, &destination).await
+            {
+                dispatch_event(app, Event::Error(format!("Download error: {}", e)));
+            }
+        }
+        Command::LoadPreview { bucket, key } => {
+            start_preview_load(app, s3_client, preview, &bucket, &key, stream_tx);
+        }
+        Command::LoadItems(path) => {
+            match s3_client.list(&path).await {
+                Ok(items) => {
+                    dispatch_event(app, Event::ItemsLoaded(items));
+
+                    // バケットに入った時にメタデータインデックスを構築
+                    if let Some(bucket) = &app.current_path.bucket
+                        && !app.metadata_indexed
+                        && let Ok(all_items) = s3_client.list_all_objects(bucket).await
+                        && let Ok(index) = s3v::search::MetadataIndex::new()
+                        && let Ok(count) = index.insert_items(&all_items)
+                    {
+                        *metadata_index = Some(index);
+                        dispatch_event(app, Event::MetadataIndexed(count));
+                    }
+                }
+                Err(e) => {
+                    dispatch_event(app, Event::Error(format!("Failed to load items: {}", e)));
+                }
+            }
+        }
+        Command::IndexMetadata { bucket } => {
+            if let Ok(all_items) = s3_client.list_all_objects(&bucket).await
+                && let Ok(index) = s3v::search::MetadataIndex::new()
+                && let Ok(count) = index.insert_items(&all_items)
+            {
+                *metadata_index = Some(index);
+                dispatch_event(app, Event::MetadataIndexed(count));
+            }
+        }
+        Command::ExecuteSearch(where_clause) => {
+            if let Some(index) = metadata_index.as_ref() {
+                match index.search(&where_clause) {
+                    Ok(results) => {
+                        dispatch_event(app, Event::SearchResults(results));
+                    }
+                    Err(e) => {
+                        dispatch_event(app, Event::Error(format!("Search error: {}", e)));
+                    }
+                }
+            } else {
+                dispatch_event(app, Event::Error("Metadata not indexed yet".to_string()));
             }
         }
     }

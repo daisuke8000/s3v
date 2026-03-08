@@ -12,7 +12,7 @@ use ratatui::{
 };
 use ratatui_image::protocol::StatefulProtocol;
 
-use crate::app::{App, Mode};
+use crate::app::{App, BannerState, Mode};
 use crate::s3::S3Item;
 
 use layout::AppLayout;
@@ -20,42 +20,47 @@ use theme::theme;
 
 /// メイン描画関数（純粋関数）
 pub fn render(app: &App, frame: &mut Frame, image_state: Option<&mut StatefulProtocol>) {
-    if app.show_banner {
-        let layout = AppLayout::banner(frame.area());
-        if let AppLayout::Banner { area } = layout {
-            let is_loading = app.mode == Mode::Loading;
-            banner::render_banner(frame, area, is_loading);
+    match app.banner_state {
+        BannerState::Splash => {
+            let layout = AppLayout::splash(frame.area());
+            if let AppLayout::Splash { area } = layout {
+                let is_loading = app.mode == Mode::Loading;
+                banner::render_banner(frame, area, is_loading);
+            }
         }
-        return;
-    }
-
-    if app.mode == Mode::Preview {
-        let layout = AppLayout::with_preview(frame.area());
-        if let AppLayout::WithPreview {
-            header,
-            list,
-            preview,
-            footer,
-        } = layout
-        {
-            render_header(app, frame, header);
-            render_list(app, frame, list);
-            preview::render_preview(app, frame, preview, image_state);
-            render_footer(app, frame, footer);
+        BannerState::Active => {
+            if app.mode == Mode::Preview {
+                let layout = AppLayout::banner_with_preview(frame.area());
+                if let AppLayout::BannerWithPreview {
+                    banner: banner_area,
+                    header,
+                    list,
+                    preview,
+                    footer,
+                } = layout
+                {
+                    banner::render_compact_banner(frame, banner_area);
+                    render_header(app, frame, header);
+                    render_list(app, frame, list);
+                    preview::render_preview(app, frame, preview, image_state);
+                    render_footer(app, frame, footer);
+                }
+            } else {
+                let layout = AppLayout::banner_with_normal(frame.area());
+                if let AppLayout::BannerWithNormal {
+                    banner: banner_area,
+                    header,
+                    list,
+                    footer,
+                } = layout
+                {
+                    banner::render_compact_banner(frame, banner_area);
+                    render_header(app, frame, header);
+                    render_list(app, frame, list);
+                    render_footer(app, frame, footer);
+                }
+            }
         }
-        return;
-    }
-
-    let layout = AppLayout::normal(frame.area());
-    if let AppLayout::Normal {
-        header,
-        list,
-        footer,
-    } = layout
-    {
-        render_header(app, frame, header);
-        render_list(app, frame, list);
-        render_footer(app, frame, footer);
     }
 }
 

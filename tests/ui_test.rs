@@ -20,7 +20,7 @@ fn render_to_string(app: &App, width: u16, height: u16) -> String {
 
 #[test]
 fn test_ui_renders_startup_banner() {
-    let app = App::new(); // show_banner = true, mode = Loading
+    let app = App::new(); // banner_state = Splash, mode = Loading
     let output = render_to_string(&app, 80, 24);
 
     assert!(
@@ -46,7 +46,7 @@ fn test_ui_renders_normal_after_banner_dismissed() {
     ];
     let (new_app, _) = app.handle_event(Event::ItemsLoaded(items));
     app = new_app;
-    app.show_banner = false; // キー押下でバナーが閉じた状態をシミュレート
+    app.banner_state = s3v::BannerState::Active; // キー押下でバナーが閉じた状態をシミュレート
 
     let output = render_to_string(&app, 80, 24);
 
@@ -63,7 +63,7 @@ fn test_ui_renders_normal_after_banner_dismissed() {
 #[test]
 fn test_ui_renders_breadcrumb() {
     let mut app = App::new();
-    app.show_banner = false;
+    app.banner_state = s3v::BannerState::Active;
     app.current_path = S3Path::with_prefix("test-bucket", "folder/sub/");
     app.items = vec![S3Item::File {
         name: "file.txt".to_string(),
@@ -88,7 +88,7 @@ fn test_ui_renders_breadcrumb() {
 #[test]
 fn test_ui_renders_rounded_borders() {
     let mut app = App::new();
-    app.show_banner = false;
+    app.banner_state = s3v::BannerState::Active;
     app.items = vec![S3Item::Bucket {
         name: "bucket".to_string(),
     }];
@@ -108,7 +108,7 @@ fn test_ui_renders_rounded_borders() {
 #[test]
 fn test_ui_renders_help_bar() {
     let mut app = App::new();
-    app.show_banner = false;
+    app.banner_state = s3v::BannerState::Active;
     app.mode = s3v::Mode::Normal;
 
     let output = render_to_string(&app, 120, 24);
@@ -123,7 +123,7 @@ fn test_ui_renders_help_bar() {
 #[test]
 fn test_ui_renders_url_bar() {
     let mut app = App::new();
-    app.show_banner = false;
+    app.banner_state = s3v::BannerState::Active;
     app.current_path = S3Path::bucket("test-bucket");
     app.items = vec![S3Item::File {
         name: "test.txt".to_string(),

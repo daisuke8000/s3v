@@ -1,5 +1,7 @@
 pub mod image;
+pub mod page_cache;
 pub mod pdf;
+pub mod pdf_worker;
 pub mod text;
 
 /// プレビュー可能なコンテンツの種類
@@ -10,6 +12,16 @@ pub enum PreviewContent {
     Pdf {
         current_page: usize,
         total_pages: usize,
+    },
+    /// テキストストリーミング中（部分テキスト + ファイルキー）
+    StreamingText {
+        partial_text: String,
+        key: String,
+    },
+    /// 画像ダウンロード中（プログレス表示）
+    Downloading {
+        received: u64,
+        total: Option<u64>,
     },
 }
 

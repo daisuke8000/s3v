@@ -45,6 +45,31 @@ pub fn render_banner(frame: &mut Frame, area: Rect, is_loading: bool) {
     frame.render_widget(banner, area);
 }
 
+/// コンパクトバナー（Active 状態で上部に常時表示）
+pub fn render_compact_banner(frame: &mut Frame, area: Rect) {
+    let banner_text = generate_banner();
+    let version_line = Line::from(vec![
+        Span::styled(
+            "S3 Viewer TUI",
+            Style::default()
+                .fg(Color::Rgb(100, 200, 255))
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::raw("  "),
+        Span::styled(
+            concat!("v", env!("CARGO_PKG_VERSION")),
+            Style::default().fg(Color::DarkGray),
+        ),
+    ]);
+
+    let mut lines = banner_text.lines;
+    lines.push(Line::raw(""));
+    lines.push(version_line);
+
+    let banner = Paragraph::new(Text::from(lines)).alignment(Alignment::Center);
+    frame.render_widget(banner, area);
+}
+
 /// tui-banner で ASCII アートを生成し、ansi-to-tui で ratatui Text に変換
 fn generate_banner() -> Text<'static> {
     let ansi_string = tui_banner::Banner::new("s3v")

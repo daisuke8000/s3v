@@ -18,6 +18,16 @@ pub enum Mode {
     Search,
 }
 
+/// バナー表示状態
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum BannerState {
+    /// バナーのみ表示（起動直後）
+    #[default]
+    Splash,
+    /// バナー（上部コンパクト） + 操作画面
+    Active,
+}
+
 /// アプリケーション状態（Model）
 #[derive(Debug, Clone)]
 pub struct App {
@@ -31,8 +41,8 @@ pub struct App {
     pub mode: Mode,
     /// 実行中フラグ
     pub running: bool,
-    /// 起動バナー表示フラグ
-    pub show_banner: bool,
+    /// バナー表示状態
+    pub banner_state: BannerState,
     /// 選択されたアイテムのインデックス
     pub selected: HashSet<usize>,
     /// フィルタ文字列
@@ -82,7 +92,7 @@ impl App {
             cursor: 0,
             mode: Mode::Loading,
             running: true,
-            show_banner: true,
+            banner_state: BannerState::Splash,
             selected: HashSet::new(),
             filter: String::new(),
             all_items: Vec::new(),
@@ -126,6 +136,63 @@ impl App {
                 },
                 None,
             ),
+            Event::PreviewChunk(chunk) => {
+                let (partial_text, key) = match self.preview_content {
+                    Some(PreviewContent::StreamingText {
+                        mut partial_text,
+                        key,
+                    }) => {
+                        partial_text.push_str(&chunk);
+                        (partial_text, key)
+                    }
+                    _ => (chunk, String::new()),
+                };
+                (
+                    Self {
+                        preview_content: Some(PreviewContent::StreamingText { partial_text, key }),
+                        mode: Mode::Preview,
+                        ..self
+                    },
+                    None,
+                )
+            }
+            Event::PreviewStreamComplete(formatted) => {
+                let content = match formatted {
+                    Some(text) => text,
+                    None => match &self.preview_content {
+                        Some(PreviewContent::StreamingText { partial_text, .. }) => {
+                            partial_text.clone()
+                        }
+                        _ => String::new(),
+                    },
+                };
+                (
+                    Self {
+                        preview_content: Some(PreviewContent::Text(content)),
+                        preview_scroll: 0,
+                        mode: Mode::Preview,
+                        ..self
+                    },
+                    None,
+                )
+            }
+            Event::PreviewProgress { received, total } => (
+                Self {
+                    preview_content: Some(PreviewContent::Downloading { received, total }),
+                    mode: Mode::Preview,
+                    ..self
+                },
+                None,
+            ),
+            Event::PreviewImageReady => (
+                Self {
+                    preview_content: Some(PreviewContent::Image),
+                    mode: Mode::Preview,
+                    ..self
+                },
+                None,
+            ),
+            Event::PdfDataReady => (self, None),
             Event::Error(msg) => (
                 Self {
                     mode: Mode::Normal,
@@ -148,11 +215,11 @@ impl App {
         // エラーメッセージをクリア
         self.error_message = None;
 
-        // バナー表示中は任意のキーでバナーを閉じる
-        if self.show_banner {
+        // Splash 状態では任意のキーで Active に遷移
+        if self.banner_state == BannerState::Splash {
             return (
                 Self {
-                    show_banner: false,
+                    banner_state: BannerState::Active,
                     ..self
                 },
                 None,

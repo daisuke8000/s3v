@@ -16,6 +16,16 @@ pub enum Event {
     SearchResults(Vec<S3Item>),
     /// メタデータインデックス完了
     MetadataIndexed(usize),
+    /// テキストストリーミングチャンク受信
+    PreviewChunk(String),
+    /// ストリーミング完了（整形テキスト or None）
+    PreviewStreamComplete(Option<String>),
+    /// 画像ダウンロード進捗
+    PreviewProgress { received: u64, total: Option<u64> },
+    /// 画像デコード完了
+    PreviewImageReady,
+    /// PDF データダウンロード完了（メインループで PdfWorker セットアップ）
+    PdfDataReady,
     /// エラー発生
     Error(String),
     /// 終了要求

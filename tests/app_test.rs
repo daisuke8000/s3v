@@ -8,7 +8,7 @@ fn key_event(code: KeyCode) -> KeyEvent {
 /// バナーを閉じた状態の App を作成するヘルパー
 fn app_without_banner() -> App {
     let mut app = App::new();
-    app.show_banner = false;
+    app.banner_state = s3v::BannerState::Active;
     app
 }
 
@@ -20,7 +20,7 @@ fn test_app_initial_state() {
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Loading);
     assert!(app.running);
-    assert!(app.show_banner);
+    assert_eq!(app.banner_state, s3v::BannerState::Splash);
 }
 
 #[test]
@@ -39,18 +39,30 @@ fn test_app_items_loaded() {
     assert_eq!(app.items.len(), 2);
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Normal);
-    assert!(app.show_banner, "Banner should remain after items loaded");
+    assert_eq!(
+        app.banner_state,
+        s3v::BannerState::Splash,
+        "Banner should remain Splash after items loaded"
+    );
     assert!(cmd.is_none());
 }
 
 #[test]
 fn test_app_banner_dismissed_by_keypress() {
     let app = App::new();
-    assert!(app.show_banner, "Banner should show on startup");
+    assert_eq!(
+        app.banner_state,
+        s3v::BannerState::Splash,
+        "Banner should show on startup"
+    );
 
     // 任意のキーでバナーを閉じる
     let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
-    assert!(!app.show_banner, "Banner should hide after keypress");
+    assert_eq!(
+        app.banner_state,
+        s3v::BannerState::Active,
+        "Banner should transition to Active after keypress"
+    );
     assert!(
         cmd.is_none(),
         "Dismissing banner should not produce a command"
@@ -463,6 +475,108 @@ fn test_search_rejects_multiple_statements() {
     let index = s3v::search::MetadataIndex::new().unwrap();
     let result = index.search("1=1; SELECT * FROM objects");
     assert!(result.is_err());
+}
+
+#[test]
+fn test_preview_chunk_appends_text() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Preview;
+    app.preview_content = Some(s3v::preview::PreviewContent::StreamingText {
+        partial_text: "hello".into(),
+        key: "test.txt".into(),
+    });
+
+    let (app, _) = app.handle_event(Event::PreviewChunk(" world".into()));
+    match &app.preview_content {
+        Some(s3v::preview::PreviewContent::StreamingText { partial_text, .. }) => {
+            assert_eq!(partial_text, "hello world");
+        }
+        _ => panic!("Expected StreamingText"),
+    }
+}
+
+#[test]
+fn test_preview_stream_complete() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Preview;
+    app.preview_content = Some(s3v::preview::PreviewContent::StreamingText {
+        partial_text: "raw text".into(),
+        key: "test.txt".into(),
+    });
+
+    let (app, _) = app.handle_event(Event::PreviewStreamComplete(Some("formatted".into())));
+    match &app.preview_content {
+        Some(s3v::preview::PreviewContent::Text(text)) => {
+            assert_eq!(text, "formatted");
+        }
+        _ => panic!("Expected Text after StreamComplete"),
+    }
+    assert_eq!(app.preview_scroll, 0);
+}
+
+#[test]
+fn test_preview_progress() {
+    let mut app = app_without_banner();
+    let (app, _) = app.handle_event(Event::PreviewProgress {
+        received: 1024,
+        total: Some(4096),
+    });
+    match &app.preview_content {
+        Some(s3v::preview::PreviewContent::Downloading { received, total }) => {
+            assert_eq!(*received, 1024);
+            assert_eq!(*total, Some(4096));
+        }
+        _ => panic!("Expected Downloading"),
+    }
+    assert_eq!(app.mode, Mode::Preview);
+}
+
+#[test]
+fn test_preview_image_ready() {
+    let mut app = app_without_banner();
+    app.preview_content = Some(s3v::preview::PreviewContent::Downloading {
+        received: 4096,
+        total: Some(4096),
+    });
+
+    let (app, _) = app.handle_event(Event::PreviewImageReady);
+    assert!(matches!(
+        app.preview_content,
+        Some(s3v::preview::PreviewContent::Image)
+    ));
+    assert_eq!(app.mode, Mode::Preview);
+}
+
+#[test]
+fn test_banner_state_transitions() {
+    let app = App::new();
+    assert_eq!(app.banner_state, s3v::BannerState::Splash);
+
+    // Splash → Active via keypress
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.banner_state, s3v::BannerState::Active);
+
+    // Active state persists
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Down)));
+    assert_eq!(app.banner_state, s3v::BannerState::Active);
+}
+
+#[test]
+fn test_utf8_boundary() {
+    // 完全な ASCII
+    assert_eq!(s3v::preview::text::find_valid_utf8_boundary(b"hello"), 5);
+
+    // 不完全な UTF-8 (日本語の先頭2バイトだけ)
+    let incomplete = &[0xe3, 0x81]; // "あ" の先頭2バイト (3バイト文字)
+    assert_eq!(s3v::preview::text::find_valid_utf8_boundary(incomplete), 0);
+
+    // 完全な UTF-8 + 不完全な末尾
+    let mut mixed_bytes = "あ".as_bytes().to_vec();
+    mixed_bytes.extend_from_slice(&[0xe3, 0x81]); // 不完全な末尾
+    assert_eq!(
+        s3v::preview::text::find_valid_utf8_boundary(&mixed_bytes),
+        3
+    );
 }
 
 #[test]
