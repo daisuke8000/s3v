@@ -150,16 +150,9 @@ impl App {
                 total_size,
                 base_prefix,
             }) => {
-                let ts = super::download::download_timestamp();
-                let archive_name = "s3v-download";
-                let zip_path = crate::download::zip_download::zip_destination(
-                    &destination,
-                    archive_name,
-                    *total_size,
-                    &ts,
-                );
                 let keys = keys.clone();
                 let base_prefix = base_prefix.clone();
+                let total_size = *total_size;
                 (
                     Self {
                         mode: super::Mode::Downloading,
@@ -173,9 +166,10 @@ impl App {
                     vec![Command::StartZipDownload {
                         bucket,
                         keys,
-                        destination: zip_path,
+                        destination,
                         base_prefix,
-                        zip_filename: format!("{}.zip", archive_name),
+                        archive_name: "s3v-download".to_string(),
+                        total_size,
                     }],
                 )
             }
@@ -185,7 +179,6 @@ impl App {
                 total_size,
                 ..
             }) => {
-                let ts = super::download::download_timestamp();
                 // フォルダ名を archive 名に使用（末尾 / を除去）
                 let folder_name = prefix
                     .trim_end_matches('/')
@@ -193,12 +186,6 @@ impl App {
                     .next()
                     .unwrap_or("folder")
                     .to_string();
-                let zip_path = crate::download::zip_download::zip_destination(
-                    &destination,
-                    &folder_name,
-                    *total_size,
-                    &ts,
-                );
                 // prefix の親を base_prefix にする
                 // e.g. prefix="photos/vacation/" → parent="photos/"
                 let base_prefix = prefix
@@ -208,7 +195,7 @@ impl App {
                     .unwrap_or("")
                     .to_string();
                 let keys = keys.clone();
-                let zip_filename = format!("{}.zip", folder_name);
+                let total_size = *total_size;
                 (
                     Self {
                         mode: super::Mode::Downloading,
@@ -222,9 +209,10 @@ impl App {
                     vec![Command::StartZipDownload {
                         bucket,
                         keys,
-                        destination: zip_path,
+                        destination,
                         base_prefix,
-                        zip_filename,
+                        archive_name: folder_name,
+                        total_size,
                     }],
                 )
             }

@@ -1,5 +1,8 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::SystemTime;
 
 use aws_sdk_s3::Client;
 use tokio::sync::mpsc;
@@ -10,6 +13,38 @@ use crate::error::{Result, S3vError};
 
 /// 10MB threshold for auto-directory creation
 const AUTO_DIR_THRESHOLD: u64 = 10 * 1024 * 1024;
+
+/// Generate timestamp string for download directories (YYYYMMDD-HHMMSS in UTC)
+pub fn download_timestamp() -> String {
+    let secs = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let time_of_day = secs % 86400;
+    let hours = time_of_day / 3600;
+    let minutes = (time_of_day % 3600) / 60;
+    let seconds = time_of_day % 60;
+    let (year, month, day) = days_to_date(secs / 86400);
+    format!(
+        "{:04}{:02}{:02}-{:02}{:02}{:02}",
+        year, month, day, hours, minutes, seconds
+    )
+}
+
+/// Convert days since Unix epoch to (year, month, day) using Howard Hinnant's algorithm
+fn days_to_date(days_since_epoch: u64) -> (u64, u64, u64) {
+    let z = days_since_epoch as i64 + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    (y as u64, m, d)
+}
 
 /// Determine zip file destination path.
 /// If total_size > 10MB, creates s3v-{timestamp} subdirectory.
@@ -53,12 +88,43 @@ pub fn write_zip_entry<W: Write + std::io::Seek>(
 }
 
 /// Download multiple files from S3 and write them directly into a zip archive.
+/// Supports cancellation via the `cancel` flag. On error or cancellation,
+/// the partial zip file is removed.
 pub async fn download_as_zip(
     client: &Client,
     bucket: &str,
     keys: &[String],
     zip_path: &Path,
     base_prefix: &str,
+    cancel: Arc<AtomicBool>,
+    progress_tx: mpsc::UnboundedSender<(usize, usize, String)>,
+) -> Result<()> {
+    let result = download_as_zip_inner(
+        client,
+        bucket,
+        keys,
+        zip_path,
+        base_prefix,
+        &cancel,
+        progress_tx,
+    )
+    .await;
+
+    if result.is_err() || cancel.load(Ordering::Relaxed) {
+        // Clean up partial zip file on error or cancellation
+        let _ = std::fs::remove_file(zip_path);
+    }
+
+    result
+}
+
+async fn download_as_zip_inner(
+    client: &Client,
+    bucket: &str,
+    keys: &[String],
+    zip_path: &Path,
+    base_prefix: &str,
+    cancel: &AtomicBool,
     progress_tx: mpsc::UnboundedSender<(usize, usize, String)>,
 ) -> Result<()> {
     // Create parent directory if needed
@@ -71,6 +137,14 @@ pub async fn download_as_zip(
     let total = keys.len();
 
     for (i, key) in keys.iter().enumerate() {
+        // Check for cancellation before each file
+        if cancel.load(Ordering::Relaxed) {
+            return Err(S3vError::Io(std::io::Error::new(
+                std::io::ErrorKind::Interrupted,
+                "Download cancelled",
+            )));
+        }
+
         let resp = client
             .get_object()
             .bucket(bucket)
@@ -159,5 +233,24 @@ mod tests {
         assert_eq!(archive.len(), 2);
         assert_eq!(archive.by_index(0).unwrap().name(), "dir/file1.txt");
         assert_eq!(archive.by_index(1).unwrap().name(), "dir/file2.txt");
+    }
+
+    // I5: days_to_date tests
+    #[test]
+    fn test_days_to_date_epoch() {
+        // 1970-01-01
+        assert_eq!(days_to_date(0), (1970, 1, 1));
+    }
+
+    #[test]
+    fn test_days_to_date_known_date_2024() {
+        // 2024-03-08 = 19790 days since epoch
+        assert_eq!(days_to_date(19790), (2024, 3, 8));
+    }
+
+    #[test]
+    fn test_days_to_date_known_date_2026() {
+        // 2026-03-08 = 20520 days since epoch
+        assert_eq!(days_to_date(20520), (2026, 3, 8));
     }
 }

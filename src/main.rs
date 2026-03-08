@@ -459,10 +459,21 @@ fn handle_single_command<'a>(
                 keys,
                 destination,
                 base_prefix,
-                zip_filename: _,
+                archive_name,
+                total_size,
             } => {
+                // Timestamp generation happens here in main.rs (runtime side-effect)
+                let ts = s3v::download::zip_download::download_timestamp();
+                let zip_path = s3v::download::zip_download::zip_destination(
+                    &destination,
+                    &archive_name,
+                    total_size,
+                    &ts,
+                );
+
                 let client = s3_client.inner().clone();
                 let tx = stream_tx.clone();
+                let cancel = Arc::new(AtomicBool::new(false));
                 tokio::spawn(async move {
                     let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
 
@@ -481,13 +492,14 @@ fn handle_single_command<'a>(
                         &client,
                         &bucket,
                         &keys,
-                        &destination,
+                        &zip_path,
                         &base_prefix,
+                        cancel,
                         progress_tx,
                     )
                     .await;
 
-                    // Drop progress_tx (already moved into download_as_zip) so progress_handle finishes
+                    // Wait for progress forwarder to finish
                     let _ = progress_handle.await;
 
                     match result {
