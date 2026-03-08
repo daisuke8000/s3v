@@ -106,6 +106,13 @@ fn build_breadcrumb(app: &App) -> Line<'static> {
         ));
     }
 
+    if app.metadata_indexed {
+        spans.push(Span::styled(
+            format!("  [{} indexed]", app.metadata_count),
+            Style::default().fg(t.size_fg),
+        ));
+    }
+
     Line::from(spans)
 }
 
@@ -205,24 +212,71 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
 
     let url_or_filter = match app.mode {
         Mode::Filter => format!(" /{}", app.filter),
+        Mode::Search => format!(" SQL> {}", app.search_query),
         _ => format!(" {}", url),
     };
     let url_bar = Paragraph::new(url_or_filter).style(Style::default().fg(t.url_fg));
     frame.render_widget(url_bar, chunks[0]);
 
-    // ヘルプバー
-    let help = Line::from(vec![
-        Span::styled(" ↑↓", Style::default().fg(t.help_key_fg)),
-        Span::styled("/", Style::default().fg(t.separator_fg)),
-        Span::styled("jk", Style::default().fg(t.help_key_fg)),
-        Span::styled(" Move  ", Style::default().fg(t.help_fg)),
-        Span::styled("⏎", Style::default().fg(t.help_key_fg)),
-        Span::styled(" Open  ", Style::default().fg(t.help_fg)),
-        Span::styled("⎋", Style::default().fg(t.help_key_fg)),
-        Span::styled(" Back  ", Style::default().fg(t.help_fg)),
-        Span::styled("q", Style::default().fg(t.help_key_fg)),
-        Span::styled(" Quit", Style::default().fg(t.help_fg)),
-    ]);
+    // ヘルプバー（モード別）
+    let help = match app.mode {
+        Mode::Normal => Line::from(vec![
+            Span::styled(" ↑↓", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("jk", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Move  ", Style::default().fg(t.help_fg)),
+            Span::styled("←→", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("hl", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Nav  ", Style::default().fg(t.help_fg)),
+            Span::styled("⏎", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Open  ", Style::default().fg(t.help_fg)),
+            Span::styled("Space", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Sel  ", Style::default().fg(t.help_fg)),
+            Span::styled("a", Style::default().fg(t.help_key_fg)),
+            Span::styled(" All  ", Style::default().fg(t.help_fg)),
+            Span::styled("d", Style::default().fg(t.help_key_fg)),
+            Span::styled(" DL  ", Style::default().fg(t.help_fg)),
+            Span::styled("/", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Filter  ", Style::default().fg(t.help_fg)),
+            Span::styled("?", Style::default().fg(t.help_key_fg)),
+            Span::styled(" SQL  ", Style::default().fg(t.help_fg)),
+            Span::styled("q", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Quit", Style::default().fg(t.help_fg)),
+        ]),
+        Mode::Filter => Line::from(vec![
+            Span::styled(" ⏎", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Apply  ", Style::default().fg(t.help_fg)),
+            Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Cancel  ", Style::default().fg(t.help_fg)),
+            Span::styled("Type to filter", Style::default().fg(t.help_fg)),
+        ]),
+        Mode::Preview => Line::from(vec![
+            Span::styled(" ↑↓", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("jk", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Scroll  ", Style::default().fg(t.help_fg)),
+            Span::styled("←→", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("hl", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Page  ", Style::default().fg(t.help_fg)),
+            Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("q", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Close", Style::default().fg(t.help_fg)),
+        ]),
+        Mode::Search => Line::from(vec![
+            Span::styled(" ⏎", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Execute  ", Style::default().fg(t.help_fg)),
+            Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Cancel  ", Style::default().fg(t.help_fg)),
+            Span::styled("Type SQL WHERE clause", Style::default().fg(t.help_fg)),
+        ]),
+        Mode::Loading => Line::from(vec![Span::styled(
+            " Loading...",
+            Style::default().fg(t.help_fg),
+        )]),
+    };
 
     let help_block = Block::default()
         .borders(Borders::ALL)

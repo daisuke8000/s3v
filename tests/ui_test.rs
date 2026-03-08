@@ -111,12 +111,13 @@ fn test_ui_renders_help_bar() {
     app.show_banner = false;
     app.mode = s3v::Mode::Normal;
 
-    let output = render_to_string(&app, 80, 24);
+    let output = render_to_string(&app, 120, 24);
 
     assert!(output.contains("Move"), "Help should mention Move");
     assert!(output.contains("Open"), "Help should mention Open");
-    assert!(output.contains("Back"), "Help should mention Back");
     assert!(output.contains("Quit"), "Help should mention Quit");
+    assert!(output.contains("Filter"), "Help should mention Filter");
+    assert!(output.contains("SQL"), "Help should mention SQL");
 }
 
 #[test]
