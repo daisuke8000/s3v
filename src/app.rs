@@ -105,6 +105,7 @@ impl App {
             KeyCode::Char(' ') => (self.toggle_selection(), None),
             KeyCode::Char('a') => (self.toggle_select_all(), None),
             KeyCode::Char('/') => (self.enter_filter_mode(), None),
+            KeyCode::Char('d') => self.start_download(),
             _ => (self, None),
         }
     }
@@ -247,6 +248,31 @@ impl App {
             .iter()
             .filter_map(|&i| self.items.get(i))
             .collect()
+    }
+
+    fn start_download(self) -> (Self, Option<Command>) {
+        let bucket = match &self.current_path.bucket {
+            Some(b) => b.clone(),
+            None => return (self, None),
+        };
+        let key = self.selected_item().and_then(|item| match item {
+            S3Item::File { key, .. } => Some(key.clone()),
+            _ => None,
+        });
+        let key = match key {
+            Some(k) => k,
+            None => return (self, None),
+        };
+        let destination =
+            dirs::download_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+        (
+            self,
+            Some(Command::Download {
+                bucket,
+                key,
+                destination,
+            }),
+        )
     }
 
     fn enter_filter_mode(self) -> Self {

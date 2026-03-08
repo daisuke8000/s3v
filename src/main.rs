@@ -104,6 +104,24 @@ async fn run_app(
             if let Some(cmd) = cmd {
                 match cmd {
                     Command::Quit => break,
+                    Command::Download {
+                        bucket,
+                        key,
+                        destination,
+                    } => {
+                        if let Err(e) = s3v::download::download_file(
+                            s3_client.inner(),
+                            &bucket,
+                            &key,
+                            &destination,
+                        )
+                        .await
+                        {
+                            let (new_app, _) = std::mem::take(app)
+                                .handle_event(Event::Error(format!("Download error: {}", e)));
+                            *app = new_app;
+                        }
+                    }
                     Command::LoadItems(path) => {
                         let items = s3_client.list(&path).await.unwrap_or_else(|e| {
                             eprintln!("Error loading items: {}", e);
