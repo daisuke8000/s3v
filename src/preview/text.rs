@@ -24,10 +24,7 @@ const PREVIEWABLE_EXTENSIONS: &[&str] = &[
 ];
 
 pub fn is_previewable(name: &str) -> bool {
-    let lower = name.to_lowercase();
-    PREVIEWABLE_EXTENSIONS
-        .iter()
-        .any(|ext| lower.ends_with(&format!(".{}", ext)))
+    super::has_extension(name, PREVIEWABLE_EXTENSIONS)
 }
 
 pub fn format_preview(content: &str, key: &str) -> String {

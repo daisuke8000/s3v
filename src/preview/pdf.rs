@@ -1,7 +1,7 @@
 use crate::error::{Result, S3vError};
 
 pub fn is_pdf(name: &str) -> bool {
-    name.to_lowercase().ends_with(".pdf")
+    super::has_extension(name, &["pdf"])
 }
 
 /// PDF のページ数を取得
