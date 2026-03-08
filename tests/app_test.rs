@@ -450,3 +450,33 @@ fn test_metadata_indexed() {
     assert!(app.metadata_indexed);
     assert_eq!(app.metadata_count, 42);
 }
+
+#[test]
+fn test_search_rejects_semicolon() {
+    let index = s3v::search::MetadataIndex::new().unwrap();
+    let result = index.search("1=1; DROP TABLE objects");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_search_rejects_multiple_statements() {
+    let index = s3v::search::MetadataIndex::new().unwrap();
+    let result = index.search("1=1; SELECT * FROM objects");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_search_valid_where_clause() {
+    let index = s3v::search::MetadataIndex::new().unwrap();
+    let items = vec![
+        S3Item::File {
+            name: "test.txt".into(),
+            key: "test.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+    ];
+    index.insert_items(&items).unwrap();
+    let result = index.search("name LIKE '%test%'").unwrap();
+    assert_eq!(result.len(), 1);
+}

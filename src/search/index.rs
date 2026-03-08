@@ -90,6 +90,13 @@ impl MetadataIndex {
     }
 
     pub fn search(&self, where_clause: &str) -> Result<Vec<S3Item>> {
+        // セミコロンを含むクエリを拒否（複数ステートメント防止）
+        if where_clause.contains(';') {
+            return Err(S3vError::Terminal(
+                "Invalid query: semicolons are not allowed".to_string(),
+            ));
+        }
+
         let sql = format!(
             "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE {}",
             where_clause
