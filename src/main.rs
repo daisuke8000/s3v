@@ -10,8 +10,8 @@ use crossterm::{
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_image::picker::Picker;
 
-use s3v::{App, Cli, Command, Event, S3Client};
 use s3v::command_handler::{PreviewState, dispatch_event, handle_load_preview, update_pdf_page};
+use s3v::{App, Cli, Command, Event, S3Client};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -152,8 +152,7 @@ async fn run_app(
                                 // バケットに入った時にメタデータインデックスを構築
                                 if let Some(bucket) = &app.current_path.bucket
                                     && !app.metadata_indexed
-                                    && let Ok(all_items) =
-                                        s3_client.list_all_objects(bucket).await
+                                    && let Ok(all_items) = s3_client.list_all_objects(bucket).await
                                     && let Ok(index) = s3v::search::MetadataIndex::new()
                                     && let Ok(count) = index.insert_items(&all_items)
                                 {

@@ -103,8 +103,7 @@ pub async fn handle_load_preview(
                     let bytes_for_render = pdf_bytes.clone();
                     let result = tokio::task::spawn_blocking(move || {
                         let total = crate::preview::pdf::page_count(&bytes_for_count)?;
-                        let img =
-                            crate::preview::pdf::render_page_to_image(&bytes_for_render, 0)?;
+                        let img = crate::preview::pdf::render_page_to_image(&bytes_for_render, 0)?;
                         Ok::<(usize, image::DynamicImage), crate::error::S3vError>((total, img))
                     })
                     .await;
@@ -125,10 +124,7 @@ pub async fn handle_load_preview(
                             dispatch_event(app, Event::Error(e.to_string()));
                         }
                         Err(e) => {
-                            dispatch_event(
-                                app,
-                                Event::Error(format!("PDF task error: {}", e)),
-                            );
+                            dispatch_event(app, Event::Error(format!("PDF task error: {}", e)));
                         }
                     }
                 } else if crate::preview::image::is_image(key) {
@@ -142,10 +138,7 @@ pub async fn handle_load_preview(
                             );
                         }
                         Err(e) => {
-                            dispatch_event(
-                                app,
-                                Event::Error(format!("Image decode error: {}", e)),
-                            );
+                            dispatch_event(app, Event::Error(format!("Image decode error: {}", e)));
                         }
                     }
                 } else {

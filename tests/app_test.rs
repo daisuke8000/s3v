@@ -468,14 +468,12 @@ fn test_search_rejects_multiple_statements() {
 #[test]
 fn test_search_valid_where_clause() {
     let index = s3v::search::MetadataIndex::new().unwrap();
-    let items = vec![
-        S3Item::File {
-            name: "test.txt".into(),
-            key: "test.txt".into(),
-            size: 100,
-            last_modified: None,
-        },
-    ];
+    let items = vec![S3Item::File {
+        name: "test.txt".into(),
+        key: "test.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
     index.insert_items(&items).unwrap();
     let result = index.search("name LIKE '%test%'").unwrap();
     assert_eq!(result.len(), 1);
