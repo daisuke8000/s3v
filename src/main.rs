@@ -454,6 +454,9 @@ fn handle_single_command<'a>(
                     dispatch_event(app, Event::MetadataIndexed(count));
                 }
             }
+            Command::StartZipDownload { .. } => {
+                // TODO: Task 4 で実装
+            }
             Command::ExecuteSearch(where_clause) => {
                 if let Some(index) = metadata_index.as_ref() {
                     match index.search(&where_clause) {
