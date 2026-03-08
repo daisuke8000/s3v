@@ -47,6 +47,25 @@ pub fn render_preview(
                 frame.render_stateful_widget(image_widget, inner, state);
             }
         }
+        Some(PreviewContent::Pdf {
+            current_page,
+            total_pages,
+            ..
+        }) => {
+            let title = format!(" PDF Preview [{}/{}] ", current_page + 1, total_pages);
+            let block = block.title(Span::styled(
+                title,
+                Style::default()
+                    .fg(t.header_fg)
+                    .add_modifier(Modifier::BOLD),
+            ));
+            if let Some(state) = image_state {
+                let inner = block.inner(area);
+                frame.render_widget(block, area);
+                let image_widget = StatefulImage::default();
+                frame.render_stateful_widget(image_widget, inner, state);
+            }
+        }
         _ => {}
     }
 }

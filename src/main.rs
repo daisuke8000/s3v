@@ -88,6 +88,8 @@ async fn run_app(
     picker: &mut Picker,
 ) -> anyhow::Result<()> {
     let mut image_state: Option<StatefulProtocol> = None;
+    let mut pdf_raw_bytes: Option<Vec<u8>> = None;
+    let mut last_pdf_page: Option<usize> = None;
 
     loop {
         // 描画
@@ -112,6 +114,26 @@ async fn run_app(
             // Preview モードを抜けたら image_state をクリア
             if app.mode != s3v::Mode::Preview {
                 image_state = None;
+                pdf_raw_bytes = None;
+                last_pdf_page = None;
+            }
+
+            // PDF ページ送り検知: current_page が変化したら再レンダリング
+            if let Some(s3v::preview::PreviewContent::Pdf { current_page, .. }) =
+                &app.preview_content
+            {
+                if last_pdf_page != Some(*current_page) {
+                    if let Some(ref pdf_bytes) = pdf_raw_bytes {
+                        if let Ok(page_png) =
+                            s3v::preview::pdf::render_page(pdf_bytes, *current_page)
+                        {
+                            if let Ok(dyn_img) = image::load_from_memory(&page_png) {
+                                image_state = Some(picker.new_resize_protocol(dyn_img));
+                            }
+                        }
+                    }
+                    last_pdf_page = Some(*current_page);
+                }
             }
 
             // コマンド実行（副作用はここで処理）
@@ -142,10 +164,18 @@ async fn run_app(
                             s3_client,
                             picker,
                             &mut image_state,
+                            &mut pdf_raw_bytes,
                             &bucket,
                             &key,
                         )
                         .await;
+                        // PDF ページ追跡の初期化
+                        if let Some(s3v::preview::PreviewContent::Pdf {
+                            current_page, ..
+                        }) = &app.preview_content
+                        {
+                            last_pdf_page = Some(*current_page);
+                        }
                     }
                     Command::LoadItems(path) => {
                         let items = s3_client.list(&path).await.unwrap_or_else(|e| {
@@ -173,6 +203,7 @@ async fn handle_load_preview(
     s3_client: &S3Client,
     picker: &mut Picker,
     image_state: &mut Option<StatefulProtocol>,
+    pdf_raw_bytes: &mut Option<Vec<u8>>,
     bucket: &str,
     key: &str,
 ) {
@@ -188,7 +219,42 @@ async fn handle_load_preview(
             Ok(bytes) => {
                 let raw_bytes = bytes.into_bytes();
 
-                if s3v::preview::image::is_image(key) {
+                if s3v::preview::pdf::is_pdf(key) {
+                    // PDF プレビュー
+                    match s3v::preview::pdf::page_count(&raw_bytes) {
+                        Ok(total) => match s3v::preview::pdf::render_page(&raw_bytes, 0) {
+                            Ok(first_page_png) => {
+                                if let Ok(dyn_img) =
+                                    image::load_from_memory(&first_page_png)
+                                {
+                                    *image_state =
+                                        Some(picker.new_resize_protocol(dyn_img));
+                                }
+                                *pdf_raw_bytes = Some(raw_bytes.to_vec());
+                                let (new_app, _) = std::mem::take(app).handle_event(
+                                    Event::PreviewLoaded(
+                                        s3v::preview::PreviewContent::Pdf {
+                                            pages: vec![first_page_png],
+                                            current_page: 0,
+                                            total_pages: total,
+                                        },
+                                    ),
+                                );
+                                *app = new_app;
+                            }
+                            Err(e) => {
+                                let (new_app, _) = std::mem::take(app)
+                                    .handle_event(Event::Error(e.to_string()));
+                                *app = new_app;
+                            }
+                        },
+                        Err(e) => {
+                            let (new_app, _) = std::mem::take(app)
+                                .handle_event(Event::Error(e.to_string()));
+                            *app = new_app;
+                        }
+                    }
+                } else if s3v::preview::image::is_image(key) {
                     // 画像プレビュー
                     match image::load_from_memory(&raw_bytes) {
                         Ok(dyn_img) => {

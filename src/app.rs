@@ -169,8 +169,55 @@ impl App {
                 },
                 None,
             ),
+            KeyCode::Right | KeyCode::Char('l') => (self.next_pdf_page(), None),
+            KeyCode::Left | KeyCode::Char('h') => (self.prev_pdf_page(), None),
             _ => (self, None),
         }
+    }
+
+    fn next_pdf_page(self) -> Self {
+        if let Some(PreviewContent::Pdf {
+            current_page,
+            total_pages,
+            ..
+        }) = &self.preview_content
+        {
+            if current_page + 1 < *total_pages {
+                let mut content = self.preview_content.clone();
+                if let Some(PreviewContent::Pdf {
+                    current_page: ref mut cp,
+                    ..
+                }) = content
+                {
+                    *cp += 1;
+                }
+                return Self {
+                    preview_content: content,
+                    ..self
+                };
+            }
+        }
+        self
+    }
+
+    fn prev_pdf_page(self) -> Self {
+        if let Some(PreviewContent::Pdf { current_page, .. }) = &self.preview_content {
+            if *current_page > 0 {
+                let mut content = self.preview_content.clone();
+                if let Some(PreviewContent::Pdf {
+                    current_page: ref mut cp,
+                    ..
+                }) = content
+                {
+                    *cp -= 1;
+                }
+                return Self {
+                    preview_content: content,
+                    ..self
+                };
+            }
+        }
+        self
     }
 
     fn handle_items_loaded(self, items: Vec<S3Item>) -> (Self, Option<Command>) {
@@ -246,6 +293,7 @@ impl App {
             } => {
                 if crate::preview::text::is_previewable(name)
                     || crate::preview::image::is_image(name)
+                    || crate::preview::pdf::is_pdf(name)
                 {
                     let bucket = self.current_path.bucket.clone().unwrap_or_default();
                     (

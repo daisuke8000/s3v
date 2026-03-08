@@ -4,7 +4,7 @@ use s3v::{App, Event, S3Item, S3Path};
 fn render_to_string(app: &App, width: u16, height: u16) -> String {
     let backend = TestBackend::new(width, height);
     let mut terminal = Terminal::new(backend).unwrap();
-    terminal.draw(|f| s3v::ui::render(app, f)).unwrap();
+    terminal.draw(|f| s3v::ui::render(app, f, None)).unwrap();
     let buffer = terminal.backend().buffer().clone();
 
     let mut output = String::new();
