@@ -6,6 +6,7 @@ pub mod error;
 pub mod preview;
 pub mod event;
 pub mod s3;
+pub mod search;
 pub mod ui;
 
 pub use app::{App, Mode};

@@ -340,7 +340,6 @@ fn test_filter_cancel() {
 }
 
 #[test]
-#[test]
 fn test_preview_mode_entry_for_text_file() {
     let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");
@@ -395,4 +394,59 @@ fn test_selection_cleared_on_navigation() {
 
     let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
     assert!(app.selected.is_empty());
+}
+
+#[test]
+fn test_search_mode_entry() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Normal;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('?'))));
+    assert_eq!(app.mode, Mode::Search);
+    assert!(app.search_query.is_empty());
+}
+
+#[test]
+fn test_search_mode_cancel() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Search;
+    app.search_query = "name LIKE '%test%'".to_string();
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.search_query.is_empty());
+}
+
+#[test]
+fn test_search_mode_execute() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Search;
+    app.search_query = "name LIKE '%test%'".to_string();
+
+    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.mode, Mode::Loading);
+    assert!(matches!(cmd, Some(Command::ExecuteSearch(_))));
+}
+
+#[test]
+fn test_search_results_loaded() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Loading;
+    let results = vec![S3Item::File {
+        name: "found.txt".into(),
+        key: "found.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    let (app, _) = app.handle_event(Event::SearchResults(results));
+    assert_eq!(app.items.len(), 1);
+    assert_eq!(app.mode, Mode::Normal);
+}
+
+#[test]
+fn test_metadata_indexed() {
+    let mut app = app_without_banner();
+    let (app, _) = app.handle_event(Event::MetadataIndexed(42));
+    assert!(app.metadata_indexed);
+    assert_eq!(app.metadata_count, 42);
 }

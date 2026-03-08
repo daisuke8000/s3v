@@ -15,6 +15,10 @@ pub enum Command {
     },
     /// ファイルのプレビューを読み込み
     LoadPreview { bucket: String, key: String },
+    /// メタデータインデックスを構築
+    IndexMetadata { bucket: String },
+    /// SQL 検索を実行
+    ExecuteSearch(String),
     /// アプリケーション終了
     Quit,
 }

@@ -90,6 +90,7 @@ async fn run_app(
     let mut image_state: Option<StatefulProtocol> = None;
     let mut pdf_raw_bytes: Option<Vec<u8>> = None;
     let mut last_pdf_page: Option<usize> = None;
+    let mut metadata_index: Option<s3v::search::MetadataIndex> = None;
 
     loop {
         // 描画
@@ -105,7 +106,9 @@ async fn run_app(
             }
 
             let event = match app.mode {
-                s3v::Mode::Filter | s3v::Mode::Preview => Event::Key(key),
+                s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => {
+                    Event::Key(key)
+                }
                 _ => Event::from_key(key),
             };
             let (new_app, cmd) = std::mem::take(app).handle_event(event);
@@ -185,6 +188,58 @@ async fn run_app(
                         let (new_app, _) =
                             std::mem::take(app).handle_event(Event::ItemsLoaded(items));
                         *app = new_app;
+
+                        // バケットに入った時にメタデータインデックスを構築
+                        if let Some(bucket) = &app.current_path.bucket {
+                            if !app.metadata_indexed {
+                                if let Ok(all_items) =
+                                    s3_client.list_all_objects(bucket).await
+                                {
+                                    if let Ok(index) = s3v::search::MetadataIndex::new() {
+                                        if let Ok(count) = index.insert_items(&all_items) {
+                                            metadata_index = Some(index);
+                                            let (new_app, _) = std::mem::take(app)
+                                                .handle_event(Event::MetadataIndexed(count));
+                                            *app = new_app;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Command::IndexMetadata { bucket } => {
+                        if let Ok(all_items) = s3_client.list_all_objects(&bucket).await {
+                            if let Ok(index) = s3v::search::MetadataIndex::new() {
+                                if let Ok(count) = index.insert_items(&all_items) {
+                                    metadata_index = Some(index);
+                                    let (new_app, _) = std::mem::take(app)
+                                        .handle_event(Event::MetadataIndexed(count));
+                                    *app = new_app;
+                                }
+                            }
+                        }
+                    }
+                    Command::ExecuteSearch(where_clause) => {
+                        if let Some(ref index) = metadata_index {
+                            match index.search(&where_clause) {
+                                Ok(results) => {
+                                    let (new_app, _) = std::mem::take(app)
+                                        .handle_event(Event::SearchResults(results));
+                                    *app = new_app;
+                                }
+                                Err(e) => {
+                                    let (new_app, _) = std::mem::take(app).handle_event(
+                                        Event::Error(format!("Search error: {}", e)),
+                                    );
+                                    *app = new_app;
+                                }
+                            }
+                        } else {
+                            let (new_app, _) = std::mem::take(app).handle_event(
+                                Event::Error("Metadata not indexed yet".to_string()),
+                            );
+                            *app = new_app;
+                        }
                     }
                 }
             }

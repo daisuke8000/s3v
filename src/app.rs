@@ -15,6 +15,7 @@ pub enum Mode {
     Loading,
     Filter,
     Preview,
+    Search,
 }
 
 /// アプリケーション状態（Model）
@@ -42,6 +43,12 @@ pub struct App {
     pub preview_content: Option<PreviewContent>,
     /// プレビューのスクロール位置
     pub preview_scroll: u16,
+    /// 検索クエリ
+    pub search_query: String,
+    /// メタデータインデックス済みフラグ
+    pub metadata_indexed: bool,
+    /// インデックス済みオブジェクト数
+    pub metadata_count: usize,
 }
 
 impl Default for App {
@@ -64,6 +71,9 @@ impl App {
             all_items: Vec::new(),
             preview_content: None,
             preview_scroll: 0,
+            search_query: String::new(),
+            metadata_indexed: false,
+            metadata_count: 0,
         }
     }
 
@@ -77,6 +87,23 @@ impl App {
                     preview_content: Some(content),
                     preview_scroll: 0,
                     mode: Mode::Preview,
+                    ..self
+                },
+                None,
+            ),
+            Event::SearchResults(results) => (
+                Self {
+                    items: results,
+                    cursor: 0,
+                    mode: Mode::Normal,
+                    ..self
+                },
+                None,
+            ),
+            Event::MetadataIndexed(count) => (
+                Self {
+                    metadata_indexed: true,
+                    metadata_count: count,
                     ..self
                 },
                 None,
@@ -110,6 +137,7 @@ impl App {
         match self.mode {
             Mode::Filter => self.handle_filter_key(key),
             Mode::Preview => self.handle_preview_key(key),
+            Mode::Search => self.handle_search_key(key),
             _ => self.handle_normal_key(key),
         }
     }
@@ -124,6 +152,7 @@ impl App {
             KeyCode::Char('a') => (self.toggle_select_all(), None),
             KeyCode::Char('/') => (self.enter_filter_mode(), None),
             KeyCode::Char('d') => self.start_download(),
+            KeyCode::Char('?') => (self.enter_search_mode(), None),
             _ => (self, None),
         }
     }
@@ -438,6 +467,46 @@ impl App {
             mode: Mode::Normal,
             selected: HashSet::new(),
             ..self
+        }
+    }
+
+    fn enter_search_mode(self) -> Self {
+        Self {
+            mode: Mode::Search,
+            search_query: String::new(),
+            ..self
+        }
+    }
+
+    fn handle_search_key(mut self, key: KeyEvent) -> (Self, Option<Command>) {
+        match key.code {
+            KeyCode::Enter => {
+                let query = self.search_query.clone();
+                (
+                    Self {
+                        mode: Mode::Loading,
+                        ..self
+                    },
+                    Some(Command::ExecuteSearch(query)),
+                )
+            }
+            KeyCode::Esc => (
+                Self {
+                    mode: Mode::Normal,
+                    search_query: String::new(),
+                    ..self
+                },
+                None,
+            ),
+            KeyCode::Backspace => {
+                self.search_query.pop();
+                (self, None)
+            }
+            KeyCode::Char(c) => {
+                self.search_query.push(c);
+                (self, None)
+            }
+            _ => (self, None),
         }
     }
 }

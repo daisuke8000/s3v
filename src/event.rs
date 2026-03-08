@@ -12,6 +12,10 @@ pub enum Event {
     ItemsLoaded(Vec<S3Item>),
     /// プレビューの読み込み完了
     PreviewLoaded(PreviewContent),
+    /// 検索結果
+    SearchResults(Vec<S3Item>),
+    /// メタデータインデックス完了
+    MetadataIndexed(usize),
     /// エラー発生
     Error(String),
     /// 終了要求

@@ -112,4 +112,65 @@ impl S3Client {
             self.list_objects(path).await
         }
     }
+
+    /// バケット内の全オブジェクトを列挙（ページネーション対応）
+    pub async fn list_all_objects(&self, bucket: &str) -> Result<Vec<S3Item>> {
+        let mut all_items = Vec::new();
+        let mut continuation_token: Option<String> = None;
+
+        loop {
+            let mut req = self.client.list_objects_v2().bucket(bucket);
+
+            if let Some(token) = &continuation_token {
+                req = req.continuation_token(token);
+            }
+
+            let resp = req
+                .send()
+                .await
+                .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
+
+            for prefix in resp.common_prefixes() {
+                if let Some(p) = prefix.prefix() {
+                    let name = p
+                        .split('/')
+                        .filter(|s| !s.is_empty())
+                        .last()
+                        .map(|s| format!("{}/", s))
+                        .unwrap_or_else(|| p.to_string());
+                    all_items.push(S3Item::Folder {
+                        name,
+                        prefix: p.to_string(),
+                    });
+                }
+            }
+
+            for obj in resp.contents() {
+                if let Some(key) = obj.key() {
+                    if key.ends_with('/') {
+                        continue;
+                    }
+                    let name = key.split('/').last().unwrap_or(key).to_string();
+                    let last_modified = obj.last_modified().map(|dt| {
+                        dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
+                            .unwrap_or_default()
+                    });
+                    all_items.push(S3Item::File {
+                        name,
+                        key: key.to_string(),
+                        size: obj.size().unwrap_or(0) as u64,
+                        last_modified,
+                    });
+                }
+            }
+
+            if resp.is_truncated() == Some(true) {
+                continuation_token = resp.next_continuation_token().map(|s| s.to_string());
+            } else {
+                break;
+            }
+        }
+
+        Ok(all_items)
+    }
 }
