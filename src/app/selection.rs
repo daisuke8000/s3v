@@ -121,46 +121,103 @@ impl App {
         };
         let destination = super::download::expand_path(&self.download_path);
 
-        let (keys, base_prefix) = match &self.download_target {
+        match &self.download_target {
             Some(super::download::DownloadTarget::SingleFile { key, .. }) => {
                 // 単一ファイル: key のディレクトリ部分を base_prefix に設定
                 // e.g. "folder/sub/test.json" → base_prefix="folder/sub/"
                 let bp = key.rfind('/').map(|i| &key[..=i]).unwrap_or("").to_string();
-                (vec![key.clone()], bp)
+                let keys = vec![key.clone()];
+                (
+                    Self {
+                        mode: super::Mode::Downloading,
+                        download_progress: Some(super::download::DownloadProgress {
+                            completed: 0,
+                            total: keys.len(),
+                            current_file: String::new(),
+                        }),
+                        ..self
+                    },
+                    vec![Command::StartDownload {
+                        bucket,
+                        keys,
+                        destination,
+                        base_prefix: bp,
+                    }],
+                )
             }
             Some(super::download::DownloadTarget::MultipleFiles {
-                keys, base_prefix, ..
-            }) => (keys.clone(), base_prefix.clone()),
-            Some(super::download::DownloadTarget::Folder { prefix, keys, .. }) => {
-                // prefix の親を base_prefix にし、フォルダ名をローカルに保持する
-                // e.g. prefix="photos/vacation/" → parent="photos/" → relative="vacation/file.txt"
-                let parent_prefix = prefix
+                keys,
+                total_size,
+                base_prefix,
+            }) => {
+                let keys = keys.clone();
+                let base_prefix = base_prefix.clone();
+                let total_size = *total_size;
+                (
+                    Self {
+                        mode: super::Mode::Downloading,
+                        download_progress: Some(super::download::DownloadProgress {
+                            completed: 0,
+                            total: keys.len(),
+                            current_file: String::new(),
+                        }),
+                        ..self
+                    },
+                    vec![Command::StartZipDownload {
+                        bucket,
+                        keys,
+                        destination,
+                        base_prefix,
+                        archive_name: "s3v-download".to_string(),
+                        total_size,
+                    }],
+                )
+            }
+            Some(super::download::DownloadTarget::Folder {
+                prefix,
+                keys,
+                total_size,
+                ..
+            }) => {
+                // フォルダ名を archive 名に使用（末尾 / を除去）
+                let folder_name = prefix
+                    .trim_end_matches('/')
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or("folder")
+                    .to_string();
+                // prefix の親を base_prefix にする
+                // e.g. prefix="photos/vacation/" → parent="photos/"
+                let base_prefix = prefix
                     .trim_end_matches('/')
                     .rfind('/')
                     .map(|i| &prefix[..=i])
-                    .unwrap_or("");
-                (keys.clone(), parent_prefix.to_string())
+                    .unwrap_or("")
+                    .to_string();
+                let keys = keys.clone();
+                let total_size = *total_size;
+                (
+                    Self {
+                        mode: super::Mode::Downloading,
+                        download_progress: Some(super::download::DownloadProgress {
+                            completed: 0,
+                            total: keys.len(),
+                            current_file: String::new(),
+                        }),
+                        ..self
+                    },
+                    vec![Command::StartZipDownload {
+                        bucket,
+                        keys,
+                        destination,
+                        base_prefix,
+                        archive_name: folder_name,
+                        total_size,
+                    }],
+                )
             }
-            None => return (self, vec![]),
-        };
-
-        (
-            Self {
-                mode: super::Mode::Downloading,
-                download_progress: Some(super::download::DownloadProgress {
-                    completed: 0,
-                    total: keys.len(),
-                    current_file: String::new(),
-                }),
-                ..self
-            },
-            vec![Command::StartDownload {
-                bucket,
-                keys,
-                destination,
-                base_prefix,
-            }],
-        )
+            None => (self, vec![]),
+        }
     }
 
     /// Tab 補完サイクル

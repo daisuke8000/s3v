@@ -61,7 +61,7 @@ pub fn render_confirm_dialog(app: &App, frame: &mut Frame) {
         }) => {
             vec![
                 Line::from(Span::styled(
-                    format!("  {} files selected ", keys.len()),
+                    format!("  {} files selected → zip", keys.len()),
                     Style::default()
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
@@ -80,7 +80,7 @@ pub fn render_confirm_dialog(app: &App, frame: &mut Frame) {
         }) => {
             vec![
                 Line::from(Span::styled(
-                    format!("  {} ", name),
+                    format!("  {} → zip", name),
                     Style::default()
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),

@@ -454,6 +454,67 @@ fn handle_single_command<'a>(
                     dispatch_event(app, Event::MetadataIndexed(count));
                 }
             }
+            Command::StartZipDownload {
+                bucket,
+                keys,
+                destination,
+                base_prefix,
+                archive_name,
+                total_size,
+            } => {
+                // Timestamp generation happens here in main.rs (runtime side-effect)
+                let ts = s3v::download::zip_download::download_timestamp();
+                let zip_path = s3v::download::zip_download::zip_destination(
+                    &destination,
+                    &archive_name,
+                    total_size,
+                    &ts,
+                );
+
+                let client = s3_client.inner().clone();
+                let tx = stream_tx.clone();
+                let cancel = Arc::new(AtomicBool::new(false));
+                tokio::spawn(async move {
+                    let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
+
+                    let tx_clone = tx.clone();
+                    let progress_handle = tokio::spawn(async move {
+                        while let Some((completed, total, file_name)) = progress_rx.recv().await {
+                            let _ = tx_clone.send(Event::DownloadFileComplete {
+                                completed,
+                                total,
+                                current_file: file_name,
+                            });
+                        }
+                    });
+
+                    let result = s3v::download::zip_download::download_as_zip(
+                        &client,
+                        &bucket,
+                        &keys,
+                        &zip_path,
+                        &base_prefix,
+                        cancel,
+                        progress_tx,
+                    )
+                    .await;
+
+                    // Wait for progress forwarder to finish
+                    let _ = progress_handle.await;
+
+                    match result {
+                        Ok(()) => {
+                            let _ = tx.send(Event::DownloadAllComplete { count: keys.len() });
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Event::Error(s3v::error::user_error(
+                                "Zip download failed",
+                                e,
+                            )));
+                        }
+                    }
+                });
+            }
             Command::ExecuteSearch(where_clause) => {
                 if let Some(index) = metadata_index.as_ref() {
                     match index.search(&where_clause) {

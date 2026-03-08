@@ -14,6 +14,18 @@ pub enum Command {
         destination: PathBuf,
         base_prefix: String,
     },
+    /// zip 圧縮ダウンロード開始（フォルダ / 複数ファイル用）
+    StartZipDownload {
+        bucket: String,
+        keys: Vec<String>,
+        /// ユーザー指定の保存先ディレクトリ（zip パス解決は main.rs で行う）
+        destination: PathBuf,
+        base_prefix: String,
+        /// zip アーカイブのベース名（拡張子なし）
+        archive_name: String,
+        /// 合計サイズ（大規模 DL 時のサブディレクトリ作成判定用）
+        total_size: u64,
+    },
     /// フォルダ内の全ファイル一覧を再帰取得（確認ダイアログ用）
     ListFolderFiles { bucket: String, prefix: String },
     /// ダウンロードキャンセル
