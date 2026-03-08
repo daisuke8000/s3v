@@ -293,38 +293,29 @@ impl App {
         Self { cursor, ..self }
     }
 
+    /// 指定パスへナビゲートし、Loading 状態に遷移する共通ヘルパー
+    fn navigate_to(self, path: S3Path) -> (Self, Option<Command>) {
+        (
+            Self {
+                current_path: path.clone(),
+                mode: Mode::Loading,
+                selected: HashSet::new(),
+                ..self
+            },
+            Some(Command::LoadItems(path)),
+        )
+    }
+
     fn enter_item(self) -> (Self, Option<Command>) {
         let item = match self.items.get(self.cursor) {
             Some(item) => item.clone(),
             None => return (self, None),
         };
         match item {
-            S3Item::Bucket { ref name } => {
-                let new_path = S3Path::bucket(name);
-                (
-                    Self {
-                        current_path: new_path.clone(),
-                        mode: Mode::Loading,
-                        selected: HashSet::new(),
-                        ..self
-                    },
-                    Some(Command::LoadItems(new_path)),
-                )
-            }
+            S3Item::Bucket { ref name } => self.navigate_to(S3Path::bucket(name)),
             S3Item::Folder { ref prefix, .. } => {
-                let new_path = S3Path::with_prefix(
-                    self.current_path.bucket.clone().unwrap_or_default(),
-                    prefix,
-                );
-                (
-                    Self {
-                        current_path: new_path.clone(),
-                        mode: Mode::Loading,
-                        selected: HashSet::new(),
-                        ..self
-                    },
-                    Some(Command::LoadItems(new_path)),
-                )
+                let bucket = self.current_path.bucket.clone().unwrap_or_default();
+                self.navigate_to(S3Path::with_prefix(bucket, prefix))
             }
             S3Item::File {
                 ref key, ref name, ..
@@ -353,15 +344,7 @@ impl App {
 
     fn go_back(self) -> (Self, Option<Command>) {
         if let Some(parent) = self.current_path.parent() {
-            (
-                Self {
-                    current_path: parent.clone(),
-                    mode: Mode::Loading,
-                    selected: HashSet::new(),
-                    ..self
-                },
-                Some(Command::LoadItems(parent)),
-            )
+            self.navigate_to(parent)
         } else {
             (self, None)
         }
