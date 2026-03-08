@@ -267,6 +267,79 @@ fn test_l_enters_item() {
 }
 
 #[test]
+#[test]
+fn test_filter_mode_entry() {
+    let mut app = app_without_banner();
+    app.items = vec![S3Item::File {
+        name: "a.txt".into(),
+        key: "a.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.mode = Mode::Normal;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('/'))));
+    assert_eq!(app.mode, Mode::Filter);
+}
+
+#[test]
+fn test_filter_applies() {
+    let mut app = app_without_banner();
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.json".into(),
+            key: "b.json".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+
+    // Enter filter mode
+    let (mut app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('/'))));
+    // Type filter text (directly set for test simplicity)
+    app.filter = "*.json".to_string();
+    // Apply
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.items.len(), 1);
+    assert_eq!(app.items[0].name(), "b.json");
+    assert_eq!(app.mode, Mode::Normal);
+}
+
+#[test]
+fn test_filter_cancel() {
+    let mut app = app_without_banner();
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.json".into(),
+            key: "b.json".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+
+    let (mut app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('/'))));
+    app.filter = "*.json".to_string();
+    // Cancel with Esc
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    assert_eq!(app.items.len(), 2); // unchanged
+    assert_eq!(app.mode, Mode::Normal);
+}
+
+#[test]
 fn test_selection_cleared_on_navigation() {
     let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");

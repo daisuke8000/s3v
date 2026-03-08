@@ -148,7 +148,7 @@ fn render_list(app: &App, frame: &mut Frame, area: Rect) {
 
     let status = match app.mode {
         Mode::Loading => " Loading... ".to_string(),
-        Mode::Normal => String::new(),
+        Mode::Normal | Mode::Filter => String::new(),
     };
 
     let list_block = Block::default()
@@ -196,7 +196,11 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
         app.current_path.to_s3_uri()
     };
 
-    let url_bar = Paragraph::new(format!(" {}", url)).style(Style::default().fg(t.url_fg));
+    let url_or_filter = match app.mode {
+        Mode::Filter => format!(" /{}", app.filter),
+        _ => format!(" {}", url),
+    };
+    let url_bar = Paragraph::new(url_or_filter).style(Style::default().fg(t.url_fg));
     frame.render_widget(url_bar, chunks[0]);
 
     // ヘルプバー

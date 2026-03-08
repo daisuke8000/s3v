@@ -93,7 +93,10 @@ async fn run_app(
                 continue;
             }
 
-            let event = Event::from_key(key);
+            let event = match app.mode {
+                s3v::Mode::Filter => Event::Key(key),
+                _ => Event::from_key(key),
+            };
             let (new_app, cmd) = std::mem::take(app).handle_event(event);
             *app = new_app;
 

@@ -12,6 +12,7 @@ pub enum Mode {
     #[default]
     Normal,
     Loading,
+    Filter,
 }
 
 /// アプリケーション状態（Model）
@@ -31,6 +32,10 @@ pub struct App {
     pub show_banner: bool,
     /// 選択されたアイテムのインデックス
     pub selected: HashSet<usize>,
+    /// フィルタ文字列
+    pub filter: String,
+    /// フィルタ適用前の全アイテム
+    pub all_items: Vec<S3Item>,
 }
 
 impl Default for App {
@@ -49,6 +54,8 @@ impl App {
             running: true,
             show_banner: true,
             selected: HashSet::new(),
+            filter: String::new(),
+            all_items: Vec::new(),
         }
     }
 
@@ -83,6 +90,13 @@ impl App {
             );
         }
 
+        match self.mode {
+            Mode::Filter => self.handle_filter_key(key),
+            _ => self.handle_normal_key(key),
+        }
+    }
+
+    fn handle_normal_key(self, key: KeyEvent) -> (Self, Option<Command>) {
         match key.code {
             KeyCode::Up | KeyCode::Char('k') => (self.move_cursor_up(), None),
             KeyCode::Down | KeyCode::Char('j') => (self.move_cursor_down(), None),
@@ -90,6 +104,23 @@ impl App {
             KeyCode::Char('h') | KeyCode::Left | KeyCode::Esc => self.go_back(),
             KeyCode::Char(' ') => (self.toggle_selection(), None),
             KeyCode::Char('a') => (self.toggle_select_all(), None),
+            KeyCode::Char('/') => (self.enter_filter_mode(), None),
+            _ => (self, None),
+        }
+    }
+
+    fn handle_filter_key(mut self, key: KeyEvent) -> (Self, Option<Command>) {
+        match key.code {
+            KeyCode::Enter => (self.apply_filter(), None),
+            KeyCode::Esc => (self.clear_filter(), None),
+            KeyCode::Backspace => {
+                self.filter.pop();
+                (self, None)
+            }
+            KeyCode::Char(c) => {
+                self.filter.push(c);
+                (self, None)
+            }
             _ => (self, None),
         }
     }
@@ -101,6 +132,8 @@ impl App {
                 cursor: 0,
                 mode: Mode::Normal,
                 selected: HashSet::new(),
+                filter: String::new(),
+                all_items: Vec::new(),
                 ..self
             },
             None,
@@ -214,5 +247,57 @@ impl App {
             .iter()
             .filter_map(|&i| self.items.get(i))
             .collect()
+    }
+
+    fn enter_filter_mode(self) -> Self {
+        let all_items = if self.all_items.is_empty() {
+            self.items.clone()
+        } else {
+            self.all_items
+        };
+        Self {
+            mode: Mode::Filter,
+            all_items,
+            filter: String::new(),
+            ..self
+        }
+    }
+
+    fn apply_filter(self) -> Self {
+        let filtered = if self.filter.is_empty() {
+            self.all_items.clone()
+        } else {
+            let escaped = regex::escape(&self.filter);
+            let pattern = escaped.replace(r"\*", ".*");
+            let re = regex::Regex::new(&format!("(?i){}", pattern)).ok();
+            self.all_items
+                .iter()
+                .filter(|item| re.as_ref().map_or(true, |r| r.is_match(item.name())))
+                .cloned()
+                .collect()
+        };
+        Self {
+            items: filtered,
+            cursor: 0,
+            mode: Mode::Normal,
+            selected: HashSet::new(),
+            ..self
+        }
+    }
+
+    fn clear_filter(self) -> Self {
+        let items = if self.all_items.is_empty() {
+            self.items
+        } else {
+            self.all_items.clone()
+        };
+        Self {
+            items,
+            filter: String::new(),
+            cursor: 0,
+            mode: Mode::Normal,
+            selected: HashSet::new(),
+            ..self
+        }
     }
 }
