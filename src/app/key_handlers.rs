@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 use crate::command::Command;
 use crate::preview::PreviewContent;
 
-use super::{App, BannerState, Mode, handle_text_input};
+use super::{App, BannerState, Mode, download, handle_text_input};
 
 impl App {
     pub(crate) fn handle_key(mut self, key: KeyEvent) -> (Self, Vec<Command>) {
@@ -25,6 +25,7 @@ impl App {
             Mode::Filter => self.handle_filter_key(key),
             Mode::PreviewFocus => self.handle_preview_key(key),
             Mode::Search => self.handle_search_key(key),
+            Mode::DownloadConfirm => self.handle_download_confirm_key(key),
             _ => self.handle_normal_key(key),
         }
     }
@@ -153,6 +154,73 @@ impl App {
             };
         }
         self
+    }
+
+    fn handle_download_confirm_key(self, key: KeyEvent) -> (Self, Vec<Command>) {
+        match key.code {
+            KeyCode::Esc => (
+                Self {
+                    mode: Mode::Normal,
+                    download_target: None,
+                    ..self
+                },
+                vec![],
+            ),
+            KeyCode::Up | KeyCode::Down => {
+                let focus = match self.confirm_focus {
+                    download::ConfirmFocus::Path => download::ConfirmFocus::Buttons,
+                    download::ConfirmFocus::Buttons => download::ConfirmFocus::Path,
+                };
+                (
+                    Self {
+                        confirm_focus: focus,
+                        path_completions: Vec::new(),
+                        completion_index: 0,
+                        ..self
+                    },
+                    vec![],
+                )
+            }
+            KeyCode::Left | KeyCode::Right
+                if self.confirm_focus == download::ConfirmFocus::Buttons =>
+            {
+                let btn = match self.confirm_button {
+                    download::ConfirmButton::Start => download::ConfirmButton::Cancel,
+                    download::ConfirmButton::Cancel => download::ConfirmButton::Start,
+                };
+                (
+                    Self {
+                        confirm_button: btn,
+                        ..self
+                    },
+                    vec![],
+                )
+            }
+            KeyCode::Enter if self.confirm_focus == download::ConfirmFocus::Buttons => {
+                match self.confirm_button {
+                    download::ConfirmButton::Cancel => (
+                        Self {
+                            mode: Mode::Normal,
+                            download_target: None,
+                            ..self
+                        },
+                        vec![],
+                    ),
+                    download::ConfirmButton::Start => self.execute_download(),
+                }
+            }
+            KeyCode::Tab if self.confirm_focus == download::ConfirmFocus::Path => {
+                self.cycle_path_completion()
+            }
+            _ if self.confirm_focus == download::ConfirmFocus::Path => {
+                let mut new_self = self;
+                handle_text_input(&mut new_self.download_path, key);
+                new_self.path_completions.clear();
+                new_self.completion_index = 0;
+                (new_self, vec![])
+            }
+            _ => (self, vec![]),
+        }
     }
 
     fn handle_search_key(mut self, key: KeyEvent) -> (Self, Vec<Command>) {

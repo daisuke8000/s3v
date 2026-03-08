@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use s3v::app::download;
 use s3v::{App, Command, Event, Mode, S3Item, S3Path};
 
 fn key_event(code: KeyCode) -> KeyEvent {
@@ -682,4 +683,202 @@ fn test_tab_toggles_preview_focus() {
     // Tab → back to Normal
     let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Tab)));
     assert_eq!(app.mode, Mode::Normal);
+}
+
+// --- Download Tests ---
+
+#[test]
+fn test_download_confirm_single_file() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![S3Item::File {
+        name: "test.json".into(),
+        key: "test.json".into(),
+        size: 1024,
+        last_modified: None,
+    }];
+    app.mode = Mode::Normal;
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('d'))));
+    assert_eq!(app.mode, Mode::DownloadConfirm);
+    assert!(app.download_target.is_some());
+    assert!(cmds.is_empty());
+    assert!(!app.download_path.is_empty());
+}
+
+#[test]
+fn test_download_confirm_folder() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![S3Item::Folder {
+        name: "images/".into(),
+        prefix: "images/".into(),
+    }];
+    app.mode = Mode::Normal;
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('d'))));
+    assert_eq!(app.mode, Mode::Loading);
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::ListFolderFiles { .. }))
+    );
+}
+
+#[test]
+fn test_folder_files_listed() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Loading;
+    app.download_path = "~/Downloads/".into();
+
+    let files = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "images/a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.txt".into(),
+            key: "images/b.txt".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    let (app, _) = app.handle_event(Event::FolderFilesListed {
+        files,
+        total_size: 300,
+    });
+    assert_eq!(app.mode, Mode::DownloadConfirm);
+    assert!(matches!(
+        app.download_target,
+        Some(download::DownloadTarget::Folder { file_count: 2, .. })
+    ));
+}
+
+#[test]
+fn test_download_confirm_cancel_esc() {
+    let mut app = app_without_banner();
+    app.mode = Mode::DownloadConfirm;
+    app.download_target = Some(download::DownloadTarget::SingleFile {
+        name: "test.json".into(),
+        key: "test.json".into(),
+        size: 1024,
+    });
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.download_target.is_none());
+}
+
+#[test]
+fn test_download_confirm_start() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.mode = Mode::DownloadConfirm;
+    app.download_path = "~/Downloads/".into();
+    app.download_target = Some(download::DownloadTarget::SingleFile {
+        name: "test.json".into(),
+        key: "test.json".into(),
+        size: 1024,
+    });
+    app.confirm_focus = download::ConfirmFocus::Buttons;
+    app.confirm_button = download::ConfirmButton::Start;
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.mode, Mode::Downloading);
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::StartDownload { .. }))
+    );
+}
+
+#[test]
+fn test_download_confirm_button_toggle() {
+    let mut app = app_without_banner();
+    app.mode = Mode::DownloadConfirm;
+    app.confirm_focus = download::ConfirmFocus::Buttons;
+    app.confirm_button = download::ConfirmButton::Start;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Right)));
+    assert_eq!(app.confirm_button, download::ConfirmButton::Cancel);
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Left)));
+    assert_eq!(app.confirm_button, download::ConfirmButton::Start);
+}
+
+#[test]
+fn test_download_confirm_focus_toggle() {
+    let mut app = app_without_banner();
+    app.mode = Mode::DownloadConfirm;
+    app.confirm_focus = download::ConfirmFocus::Buttons;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Up)));
+    assert_eq!(app.confirm_focus, download::ConfirmFocus::Path);
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Down)));
+    assert_eq!(app.confirm_focus, download::ConfirmFocus::Buttons);
+}
+
+#[test]
+fn test_download_cancel_button() {
+    let mut app = app_without_banner();
+    app.mode = Mode::DownloadConfirm;
+    app.download_target = Some(download::DownloadTarget::SingleFile {
+        name: "test.json".into(),
+        key: "test.json".into(),
+        size: 1024,
+    });
+    app.confirm_focus = download::ConfirmFocus::Buttons;
+    app.confirm_button = download::ConfirmButton::Cancel;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.download_target.is_none());
+}
+
+#[test]
+fn test_download_file_complete_progress() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Downloading;
+
+    let (app, _) = app.handle_event(Event::DownloadFileComplete {
+        completed: 3,
+        total: 10,
+        current_file: "file3.txt".into(),
+    });
+    assert_eq!(app.mode, Mode::Downloading);
+    let progress = app.download_progress.unwrap();
+    assert_eq!(progress.completed, 3);
+    assert_eq!(progress.total, 10);
+    assert_eq!(progress.current_file, "file3.txt");
+}
+
+#[test]
+fn test_download_all_complete() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Downloading;
+    app.download_target = Some(download::DownloadTarget::SingleFile {
+        name: "test.json".into(),
+        key: "test.json".into(),
+        size: 1024,
+    });
+
+    let (app, _) = app.handle_event(Event::DownloadAllComplete { count: 5 });
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.download_target.is_none());
+    assert!(app.download_progress.is_none());
+    assert_eq!(app.error_message, Some("5 files downloaded".to_string()));
+}
+
+#[test]
+fn test_download_confirm_q_key_does_not_quit() {
+    let mut app = app_without_banner();
+    app.mode = Mode::DownloadConfirm;
+    app.confirm_focus = download::ConfirmFocus::Path;
+
+    // q キーはパス入力に使われ、Quit にならない
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('q'))));
+    assert!(app.running);
+    assert_eq!(app.mode, Mode::DownloadConfirm);
+    assert!(app.download_path.contains('q'));
 }

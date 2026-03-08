@@ -1,4 +1,6 @@
 use std::io;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use clap::Parser;
 use crossterm::{
@@ -9,7 +11,7 @@ use crossterm::{
 use futures::StreamExt;
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_image::picker::Picker;
-use tokio::sync::mpsc;
+use tokio::sync::{Semaphore, mpsc};
 
 use s3v::command_handler::{
     PreviewState, dispatch_event, setup_pdf_worker, start_debounced_preview, start_prefetch,
@@ -185,7 +187,10 @@ async fn run_app(
                     }
 
                     let event = match app.mode {
-                        s3v::Mode::Filter | s3v::Mode::PreviewFocus | s3v::Mode::Search => Event::Key(key),
+                        s3v::Mode::Filter
+                        | s3v::Mode::PreviewFocus
+                        | s3v::Mode::Search
+                        | s3v::Mode::DownloadConfirm => Event::Key(key),
                         _ => Event::from_key(key),
                     };
                     let cmds = dispatch_event(app, event);
@@ -194,6 +199,8 @@ async fn run_app(
                     if app.mode != s3v::Mode::PreviewFocus
                         && app.mode != s3v::Mode::Normal
                         && app.mode != s3v::Mode::Loading
+                        && app.mode != s3v::Mode::DownloadConfirm
+                        && app.mode != s3v::Mode::Downloading
                     {
                         preview.clear();
                     }
@@ -255,20 +262,102 @@ fn handle_single_command<'a>(
             Command::Quit => {
                 app.running = false;
             }
-            Command::Download {
+            Command::StartDownload {
                 bucket,
-                key,
+                keys,
                 destination,
+                base_prefix,
             } => {
-                if let Err(e) =
-                    s3v::download::download_file(s3_client.inner(), &bucket, &key, &destination)
-                        .await
-                {
-                    dispatch_event(
-                        app,
-                        Event::Error(s3v::error::user_error("Download failed", e)),
-                    );
-                }
+                let client = s3_client.inner().clone();
+                let tx = stream_tx.clone();
+                tokio::spawn(async move {
+                    let semaphore = Arc::new(Semaphore::new(4));
+                    let total = keys.len();
+                    let completed = Arc::new(AtomicUsize::new(0));
+                    let cancel = Arc::new(AtomicBool::new(false));
+                    let mut handles = Vec::new();
+
+                    for key in keys {
+                        if cancel.load(Ordering::Relaxed) {
+                            break;
+                        }
+                        let permit = match semaphore.clone().acquire_owned().await {
+                            Ok(p) => p,
+                            Err(_) => break,
+                        };
+                        let client = client.clone();
+                        let bucket = bucket.clone();
+                        let dest = destination.clone();
+                        let tx = tx.clone();
+                        let completed = completed.clone();
+                        let base_prefix = base_prefix.clone();
+
+                        handles.push(tokio::spawn(async move {
+                            let _permit = permit;
+                            let result = s3v::download::download_file_with_structure(
+                                &client,
+                                &bucket,
+                                &key,
+                                &dest,
+                                &base_prefix,
+                            )
+                            .await;
+                            let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
+                            let file_name = key.split('/').next_back().unwrap_or(&key).to_string();
+
+                            match result {
+                                Ok(()) => {
+                                    let _ = tx.send(Event::DownloadFileComplete {
+                                        completed: done,
+                                        total,
+                                        current_file: file_name,
+                                    });
+                                }
+                                Err(e) => {
+                                    let _ = tx.send(Event::Error(s3v::error::user_error(
+                                        &format!("Download failed: {}", key),
+                                        e,
+                                    )));
+                                }
+                            }
+                        }));
+                    }
+
+                    for handle in handles {
+                        let _ = handle.await;
+                    }
+                    let _ = tx.send(Event::DownloadAllComplete {
+                        count: completed.load(Ordering::Relaxed),
+                    });
+                });
+            }
+            Command::ListFolderFiles { bucket, prefix } => {
+                let s3_client = s3_client.clone();
+                let tx = stream_tx.clone();
+                tokio::spawn(async move {
+                    match s3_client.list_all_files(&bucket, &prefix).await {
+                        Ok(files) => {
+                            let total_size: u64 = files
+                                .iter()
+                                .filter_map(|f| match f {
+                                    s3v::S3Item::File { size, .. } => Some(*size),
+                                    _ => None,
+                                })
+                                .sum();
+                            let _ = tx.send(Event::FolderFilesListed { files, total_size });
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Event::Error(s3v::error::user_error(
+                                "List folder failed",
+                                e,
+                            )));
+                        }
+                    }
+                });
+            }
+            Command::CancelDownload => {
+                // DL キャンセル — Normal に戻る
+                dispatch_event(app, Event::Error("Download cancelled".to_string()));
             }
             Command::LoadPreview { bucket, key } => {
                 start_preview_load(app, s3_client, preview, &bucket, &key, stream_tx);

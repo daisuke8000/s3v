@@ -1,3 +1,4 @@
+pub mod download;
 mod filter;
 mod key_handlers;
 mod navigation;
@@ -21,6 +22,10 @@ pub enum Mode {
     /// プレビューペインにフォーカス（jk でスクロール）
     PreviewFocus,
     Search,
+    /// ダウンロード確認ダイアログ
+    DownloadConfirm,
+    /// ダウンロード進捗表示
+    Downloading,
 }
 
 /// バナー表示状態
@@ -79,6 +84,20 @@ pub struct App {
     pub pending_preview_key: Option<String>,
     /// テキストプレビューキャッシュ (S3 key → formatted text)
     pub preview_cache: HashMap<String, String>,
+    /// DL確認: 保存先パス
+    pub download_path: String,
+    /// DL確認: ダイアログ内フォーカス
+    pub confirm_focus: download::ConfirmFocus,
+    /// DL確認: ボタン選択
+    pub confirm_button: download::ConfirmButton,
+    /// DL確認: Tab 補完候補
+    pub path_completions: Vec<String>,
+    /// DL確認: 補完候補のインデックス
+    pub completion_index: usize,
+    /// DL確認: 対象情報
+    pub download_target: Option<download::DownloadTarget>,
+    /// DL進捗
+    pub download_progress: Option<download::DownloadProgress>,
 }
 
 /// テキスト入力フィールドの共通キー処理
@@ -125,6 +144,13 @@ impl App {
             folder_preview_items: Vec::new(),
             pending_preview_key: None,
             preview_cache: HashMap::new(),
+            download_path: String::new(),
+            confirm_focus: download::ConfirmFocus::default(),
+            confirm_button: download::ConfirmButton::default(),
+            path_completions: Vec::new(),
+            completion_index: 0,
+            download_target: None,
+            download_progress: None,
         }
     }
 
@@ -268,6 +294,85 @@ impl App {
                 new_self.cache_preview(key, content);
                 (new_self, vec![])
             }
+            Event::FolderFilesListed { files, total_size } => {
+                let keys: Vec<String> = files
+                    .iter()
+                    .filter_map(|f| match f {
+                        S3Item::File { key, .. } => Some(key.clone()),
+                        _ => None,
+                    })
+                    .collect();
+                let file_count = keys.len();
+                // フォルダ名を download_path から推測（prefix の最後のセグメント）
+                let folder_name = keys
+                    .first()
+                    .and_then(|k| {
+                        let parts: Vec<&str> = k.rsplitn(2, '/').collect();
+                        if parts.len() > 1 {
+                            let prefix_part = parts[1];
+                            prefix_part
+                                .trim_end_matches('/')
+                                .rsplit('/')
+                                .next()
+                                .map(|s| format!("{}/", s))
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_default();
+                let prefix = keys
+                    .first()
+                    .and_then(|k| {
+                        let parts: Vec<&str> = k.rsplitn(2, '/').collect();
+                        if parts.len() > 1 {
+                            Some(format!("{}/", parts[1]))
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_default();
+                (
+                    Self {
+                        mode: Mode::DownloadConfirm,
+                        download_target: Some(download::DownloadTarget::Folder {
+                            name: folder_name,
+                            prefix,
+                            file_count,
+                            total_size,
+                            keys,
+                        }),
+                        confirm_focus: download::ConfirmFocus::default(),
+                        confirm_button: download::ConfirmButton::default(),
+                        ..self
+                    },
+                    vec![],
+                )
+            }
+            Event::DownloadFileComplete {
+                completed,
+                total,
+                current_file,
+            } => (
+                Self {
+                    download_progress: Some(download::DownloadProgress {
+                        completed,
+                        total,
+                        current_file,
+                    }),
+                    ..self
+                },
+                vec![],
+            ),
+            Event::DownloadAllComplete { count } => (
+                Self {
+                    mode: Mode::Normal,
+                    download_target: None,
+                    download_progress: None,
+                    error_message: Some(format!("{} files downloaded", count)),
+                    ..self
+                },
+                vec![],
+            ),
             Event::Error(msg) => (
                 Self {
                     mode: Mode::Normal,

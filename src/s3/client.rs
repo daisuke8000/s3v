@@ -92,6 +92,39 @@ impl S3Client {
         }
     }
 
+    /// 指定 prefix 配下の全ファイルを再帰取得（ページネーション対応、delimiter なし）
+    pub async fn list_all_files(&self, bucket: &str, prefix: &str) -> Result<Vec<S3Item>> {
+        let mut all_items = Vec::new();
+        let mut continuation_token: Option<String> = None;
+
+        loop {
+            let mut req = self.client.list_objects_v2().bucket(bucket).prefix(prefix);
+
+            if let Some(token) = &continuation_token {
+                req = req.continuation_token(token);
+            }
+
+            let resp = req
+                .send()
+                .await
+                .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
+
+            for obj in resp.contents() {
+                if let Some(item) = object_to_item(obj, "") {
+                    all_items.push(item);
+                }
+            }
+
+            if resp.is_truncated() == Some(true) {
+                continuation_token = resp.next_continuation_token().map(|s| s.to_string());
+            } else {
+                break;
+            }
+        }
+
+        Ok(all_items)
+    }
+
     /// バケット内の全オブジェクトを列挙（ページネーション対応）
     pub async fn list_all_objects(&self, bucket: &str) -> Result<Vec<S3Item>> {
         let mut all_items = Vec::new();

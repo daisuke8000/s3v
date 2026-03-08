@@ -1,4 +1,5 @@
 pub mod banner;
+pub mod download;
 pub mod footer;
 pub mod format;
 pub mod header;
@@ -32,6 +33,13 @@ pub fn render(app: &App, frame: &mut Frame, image_state: Option<&mut StatefulPro
             } else {
                 // バケット内: 3ペイン [Parent | Current | Preview]
                 render_three_pane(app, frame, image_state);
+            }
+
+            // ダウンロードオーバーレイ
+            match app.mode {
+                Mode::DownloadConfirm => download::render_confirm_dialog(app, frame),
+                Mode::Downloading => download::render_progress_dialog(app, frame),
+                _ => {}
             }
         }
     }

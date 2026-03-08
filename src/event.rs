@@ -34,6 +34,16 @@ pub enum Event {
     DebounceTimeout { debounce_key: String },
     /// プリフェッチ完了（キャッシュに格納）
     PrefetchComplete { key: String, content: String },
+    /// フォルダ内ファイル一覧取得完了
+    FolderFilesListed { files: Vec<S3Item>, total_size: u64 },
+    /// 個別ファイルDL完了（進捗更新）
+    DownloadFileComplete {
+        completed: usize,
+        total: usize,
+        current_file: String,
+    },
+    /// 全DL完了
+    DownloadAllComplete { count: usize },
     /// エラー発生
     Error(String),
     /// 終了要求

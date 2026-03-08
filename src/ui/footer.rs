@@ -125,5 +125,22 @@ fn build_help_line(app: &App) -> Line<'static> {
             " Loading...",
             Style::default().fg(t.help_fg),
         )]),
+        Mode::DownloadConfirm => Line::from(vec![
+            Span::styled(" ↑↓", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Focus  ", Style::default().fg(t.help_fg)),
+            Span::styled("←→", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Button  ", Style::default().fg(t.help_fg)),
+            Span::styled("⏎", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Select  ", Style::default().fg(t.help_fg)),
+            Span::styled("Tab", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Complete  ", Style::default().fg(t.help_fg)),
+            Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Cancel", Style::default().fg(t.help_fg)),
+        ]),
+        Mode::Downloading => Line::from(vec![
+            Span::styled(" Downloading...  ", Style::default().fg(t.help_fg)),
+            Span::styled("⎋", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Cancel", Style::default().fg(t.help_fg)),
+        ]),
     }
 }

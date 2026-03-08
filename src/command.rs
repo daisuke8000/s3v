@@ -7,12 +7,17 @@ use crate::s3::S3Path;
 pub enum Command {
     /// 指定パスのアイテム一覧を取得
     LoadItems(S3Path),
-    /// ファイルをダウンロード
-    Download {
+    /// ダウンロード開始（単一 or 複数ファイル）
+    StartDownload {
         bucket: String,
-        key: String,
+        keys: Vec<String>,
         destination: PathBuf,
+        base_prefix: String,
     },
+    /// フォルダ内の全ファイル一覧を再帰取得（確認ダイアログ用）
+    ListFolderFiles { bucket: String, prefix: String },
+    /// ダウンロードキャンセル
+    CancelDownload,
     /// ファイルのプレビューを読み込み
     LoadPreview { bucket: String, key: String },
     /// メタデータインデックスを構築
