@@ -49,11 +49,39 @@ pub fn render_page_to_image(pdf_bytes: &[u8], page: usize) -> Result<image::Dyna
 }
 
 fn write_temp_pdf(pdf_bytes: &[u8]) -> Result<std::path::PathBuf> {
-    let tmp_path = std::env::temp_dir().join("s3v_preview.pdf");
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let pid = std::process::id();
+    let tmp_path = std::env::temp_dir().join(format!("s3v_preview_{}_{}.pdf", pid, id));
     std::fs::write(&tmp_path, pdf_bytes)?;
     Ok(tmp_path)
 }
 
 fn open_document(path: &std::path::Path) -> Result<mupdf::Document> {
     mupdf::Document::open(path).map_err(|e| S3vError::Terminal(format!("PDF open error: {}", e)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_pdf() {
+        assert!(is_pdf("document.pdf"));
+        assert!(is_pdf("REPORT.PDF"));
+        assert!(!is_pdf("image.png"));
+    }
+
+    #[test]
+    fn test_write_temp_pdf_unique_path() {
+        let bytes1 = b"fake pdf 1";
+        let bytes2 = b"fake pdf 2";
+        let path1 = write_temp_pdf(bytes1).unwrap();
+        let path2 = write_temp_pdf(bytes2).unwrap();
+        assert_ne!(path1, path2, "Temp paths must be unique");
+        let _ = std::fs::remove_file(&path1);
+        let _ = std::fs::remove_file(&path2);
+    }
 }
