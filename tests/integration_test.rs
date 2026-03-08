@@ -19,6 +19,7 @@ async fn create_localstack_client() -> S3Client {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_list_buckets() {
     let client = create_localstack_client().await;
     let items = client.list(&S3Path::root()).await.unwrap();
@@ -31,6 +32,7 @@ async fn test_list_buckets() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_list_objects_in_bucket() {
     let client = create_localstack_client().await;
     let path = S3Path::bucket("test-bucket");
@@ -51,6 +53,7 @@ async fn test_list_objects_in_bucket() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_list_objects_in_subfolder() {
     let client = create_localstack_client().await;
     let path = S3Path::with_prefix("test-bucket", "folder/");
@@ -64,6 +67,7 @@ async fn test_list_objects_in_subfolder() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_file_has_size() {
     let client = create_localstack_client().await;
     let path = S3Path::bucket("test-bucket");
@@ -81,6 +85,7 @@ async fn test_file_has_size() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_full_navigation_flow() {
     let client = create_localstack_client().await;
 

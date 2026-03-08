@@ -27,6 +27,7 @@ impl App {
             Mode::PreviewFocus => self.handle_preview_key(key),
             Mode::Search => self.handle_search_key(key),
             Mode::DownloadConfirm => self.handle_download_confirm_key(key),
+            Mode::Downloading => self.handle_downloading_key(key),
             _ => self.handle_normal_key(key),
         }
     }
@@ -73,14 +74,7 @@ impl App {
 
     fn handle_preview_key(self, key: KeyEvent) -> (Self, Vec<Command>) {
         match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => (
-                Self {
-                    mode: Mode::Normal,
-                    ..self
-                },
-                vec![],
-            ),
-            KeyCode::Tab => (
+            KeyCode::Esc | KeyCode::Char('q') | KeyCode::Tab => (
                 Self {
                     mode: Mode::Normal,
                     ..self
@@ -220,6 +214,21 @@ impl App {
                 new_self.completion_index = 0;
                 (new_self, vec![])
             }
+            _ => (self, vec![]),
+        }
+    }
+
+    fn handle_downloading_key(self, key: KeyEvent) -> (Self, Vec<Command>) {
+        match key.code {
+            KeyCode::Esc => (
+                Self {
+                    mode: Mode::Normal,
+                    download_progress: None,
+                    download_target: None,
+                    ..self
+                },
+                vec![Command::CancelDownload],
+            ),
             _ => (self, vec![]),
         }
     }

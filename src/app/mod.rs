@@ -283,14 +283,9 @@ impl App {
                 },
                 vec![],
             ),
-            Event::DebounceTimeout { debounce_key } => {
-                // デバウンスキーが一致する場合のみプレビューを実行
-                if self.pending_preview_key.as_deref() == Some(&debounce_key) {
-                    // main.rs 側でプレビュー読み込みを開始する
-                    (self, vec![])
-                } else {
-                    (self, vec![])
-                }
+            Event::DebounceTimeout { .. } => {
+                // デバウンス処理は main.rs 側で実行
+                (self, vec![])
             }
             Event::PrefetchComplete { key, content } => {
                 let mut new_self = self;
@@ -410,11 +405,6 @@ impl App {
             },
             vec![],
         )
-    }
-
-    /// 初期ロードコマンドを返す
-    pub fn initial_command(&self) -> Command {
-        Command::LoadItems(self.current_path.clone())
     }
 
     /// 選択中のアイテムを返す

@@ -61,21 +61,6 @@ impl S3Path {
             None => "s3://".to_string(),
         }
     }
-
-    pub fn to_https_url(&self, region: &str) -> String {
-        match &self.bucket {
-            Some(bucket) if self.prefix.is_empty() => {
-                format!("https://{}.s3.{}.amazonaws.com", bucket, region)
-            }
-            Some(bucket) => {
-                format!(
-                    "https://{}.s3.{}.amazonaws.com/{}",
-                    bucket, region, self.prefix
-                )
-            }
-            None => String::new(),
-        }
-    }
 }
 
 impl fmt::Display for S3Path {

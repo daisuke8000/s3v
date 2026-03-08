@@ -1,7 +1,5 @@
 use crate::error::{Result, S3vError};
 
-pub const DEFAULT_DPI: f32 = 96.0;
-
 pub fn is_pdf(name: &str) -> bool {
     super::has_extension(name, &["pdf"])
 }
