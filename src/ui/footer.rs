@@ -35,19 +35,17 @@ pub fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
         app.current_path.to_s3_uri()
     };
 
-    let url_or_filter = if let Some(ref err) = app.error_message {
-        format!(" Error: {}", err)
+    let (url_or_filter, url_color) = if let Some(ref err) = app.error_message {
+        (format!(" Error: {}", err), ratatui::style::Color::Red)
+    } else if let Some(ref msg) = app.status_message {
+        (format!(" {}", msg), ratatui::style::Color::Green)
     } else {
-        match app.mode {
+        let text = match app.mode {
             Mode::Filter => format!(" /{}", app.filter),
             Mode::Search => format!(" SQL> {}", app.search_query),
             _ => format!(" {}", url),
-        }
-    };
-    let url_color = if app.error_message.is_some() {
-        ratatui::style::Color::Red
-    } else {
-        t.url_fg
+        };
+        (text, t.url_fg)
     };
     let url_bar = Paragraph::new(url_or_filter).style(Style::default().fg(url_color));
     frame.render_widget(url_bar, chunks[0]);

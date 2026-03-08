@@ -74,6 +74,8 @@ pub struct App {
     pub metadata_count: usize,
     /// エラーメッセージ（UI に表示）
     pub error_message: Option<String>,
+    /// 成功メッセージ（UI に表示）
+    pub status_message: Option<String>,
     /// 親ペイン: 親ディレクトリのアイテム一覧
     pub parent_items: Vec<S3Item>,
     /// 親ペイン: 現在パスに対応するハイライト位置
@@ -139,6 +141,7 @@ impl App {
             metadata_indexed: false,
             metadata_count: 0,
             error_message: None,
+            status_message: None,
             parent_items: Vec::new(),
             parent_cursor: 0,
             folder_preview_items: Vec::new(),
@@ -368,7 +371,7 @@ impl App {
                     mode: Mode::Normal,
                     download_target: None,
                     download_progress: None,
-                    error_message: Some(format!("{} files downloaded", count)),
+                    status_message: Some(format!("{} files downloaded", count)),
                     ..self
                 },
                 vec![],

@@ -7,8 +7,9 @@ use super::{App, BannerState, Mode, download, handle_text_input};
 
 impl App {
     pub(crate) fn handle_key(mut self, key: KeyEvent) -> (Self, Vec<Command>) {
-        // エラーメッセージをクリア
+        // メッセージをクリア
         self.error_message = None;
+        self.status_message = None;
 
         // Splash 状態では任意のキーで Active に遷移
         if self.banner_state == BannerState::Splash {

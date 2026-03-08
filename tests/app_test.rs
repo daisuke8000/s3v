@@ -867,7 +867,7 @@ fn test_download_all_complete() {
     assert_eq!(app.mode, Mode::Normal);
     assert!(app.download_target.is_none());
     assert!(app.download_progress.is_none());
-    assert_eq!(app.error_message, Some("5 files downloaded".to_string()));
+    assert_eq!(app.status_message, Some("5 files downloaded".to_string()));
 }
 
 #[test]
