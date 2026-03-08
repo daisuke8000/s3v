@@ -126,14 +126,10 @@ fn render_list(app: &App, frame: &mut Frame, area: Rect) {
         .map(|(i, item)| {
             let is_selected = i == app.cursor;
             let (icon, name, size, date) = format_item(item, is_selected);
-            let selected_marker = if app.selected.contains(&i) {
-                "+"
-            } else {
-                " "
-            };
+            let selected_marker = if app.selected.contains(&i) { "+" } else { " " };
             let line = Line::from(vec![
                 Span::styled(
-                    format!("{}", selected_marker),
+                    selected_marker.to_string(),
                     Style::default().fg(ratatui::style::Color::Green),
                 ),
                 Span::styled(

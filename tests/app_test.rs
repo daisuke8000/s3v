@@ -241,7 +241,6 @@ fn test_select_all() {
 }
 
 #[test]
-#[test]
 fn test_h_goes_back() {
     let mut app = app_without_banner();
     app.current_path = S3Path::with_prefix("my-bucket", "folder/");
@@ -266,7 +265,6 @@ fn test_l_enters_item() {
     assert!(matches!(cmd, Some(Command::LoadItems(_))));
 }
 
-#[test]
 #[test]
 fn test_filter_mode_entry() {
     let mut app = app_without_banner();
@@ -360,7 +358,9 @@ fn test_preview_mode_entry_for_text_file() {
 fn test_preview_scroll() {
     let mut app = app_without_banner();
     app.mode = Mode::Preview;
-    app.preview_content = Some(s3v::preview::PreviewContent::Text("line1\nline2\nline3".into()));
+    app.preview_content = Some(s3v::preview::PreviewContent::Text(
+        "line1\nline2\nline3".into(),
+    ));
     app.preview_scroll = 0;
 
     let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('j'))));
@@ -445,7 +445,7 @@ fn test_search_results_loaded() {
 
 #[test]
 fn test_metadata_indexed() {
-    let mut app = app_without_banner();
+    let app = app_without_banner();
     let (app, _) = app.handle_event(Event::MetadataIndexed(42));
     assert!(app.metadata_indexed);
     assert_eq!(app.metadata_count, 42);

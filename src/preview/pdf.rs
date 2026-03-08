@@ -61,10 +61,10 @@ pub fn page_count(pdf_bytes: &[u8]) -> Result<usize> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     for line in stdout.lines() {
-        if let Some(rest) = line.strip_prefix("Pages:") {
-            if let Ok(n) = rest.trim().parse::<usize>() {
-                return Ok(n);
-            }
+        if let Some(rest) = line.strip_prefix("Pages:")
+            && let Ok(n) = rest.trim().parse::<usize>()
+        {
+            return Ok(n);
         }
     }
 

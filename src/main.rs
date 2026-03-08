@@ -54,8 +54,7 @@ async fn main() -> anyhow::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     // 画像プレビュー用 Picker 初期化
-    let mut picker =
-        Picker::from_query_stdio().unwrap_or_else(|_| Picker::halfblocks());
+    let mut picker = Picker::from_query_stdio().unwrap_or_else(|_| Picker::halfblocks());
 
     // アプリケーション初期化
     let initial_path = cli.initial_path();
@@ -106,9 +105,7 @@ async fn run_app(
             }
 
             let event = match app.mode {
-                s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => {
-                    Event::Key(key)
-                }
+                s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => Event::Key(key),
                 _ => Event::from_key(key),
             };
             let (new_app, cmd) = std::mem::take(app).handle_event(event);
@@ -124,19 +121,15 @@ async fn run_app(
             // PDF ページ送り検知: current_page が変化したら再レンダリング
             if let Some(s3v::preview::PreviewContent::Pdf { current_page, .. }) =
                 &app.preview_content
+                && last_pdf_page != Some(*current_page)
             {
-                if last_pdf_page != Some(*current_page) {
-                    if let Some(ref pdf_bytes) = pdf_raw_bytes {
-                        if let Ok(page_png) =
-                            s3v::preview::pdf::render_page(pdf_bytes, *current_page)
-                        {
-                            if let Ok(dyn_img) = image::load_from_memory(&page_png) {
-                                image_state = Some(picker.new_resize_protocol(dyn_img));
-                            }
-                        }
-                    }
-                    last_pdf_page = Some(*current_page);
+                if let Some(ref pdf_bytes) = pdf_raw_bytes
+                    && let Ok(page_png) = s3v::preview::pdf::render_page(pdf_bytes, *current_page)
+                    && let Ok(dyn_img) = image::load_from_memory(&page_png)
+                {
+                    image_state = Some(picker.new_resize_protocol(dyn_img));
                 }
+                last_pdf_page = Some(*current_page);
             }
 
             // コマンド実行（副作用はここで処理）
@@ -173,9 +166,8 @@ async fn run_app(
                         )
                         .await;
                         // PDF ページ追跡の初期化
-                        if let Some(s3v::preview::PreviewContent::Pdf {
-                            current_page, ..
-                        }) = &app.preview_content
+                        if let Some(s3v::preview::PreviewContent::Pdf { current_page, .. }) =
+                            &app.preview_content
                         {
                             last_pdf_page = Some(*current_page);
                         }
@@ -190,33 +182,27 @@ async fn run_app(
                         *app = new_app;
 
                         // バケットに入った時にメタデータインデックスを構築
-                        if let Some(bucket) = &app.current_path.bucket {
-                            if !app.metadata_indexed {
-                                if let Ok(all_items) =
-                                    s3_client.list_all_objects(bucket).await
-                                {
-                                    if let Ok(index) = s3v::search::MetadataIndex::new() {
-                                        if let Ok(count) = index.insert_items(&all_items) {
-                                            metadata_index = Some(index);
-                                            let (new_app, _) = std::mem::take(app)
-                                                .handle_event(Event::MetadataIndexed(count));
-                                            *app = new_app;
-                                        }
-                                    }
-                                }
-                            }
+                        if let Some(bucket) = &app.current_path.bucket
+                            && !app.metadata_indexed
+                            && let Ok(all_items) = s3_client.list_all_objects(bucket).await
+                            && let Ok(index) = s3v::search::MetadataIndex::new()
+                            && let Ok(count) = index.insert_items(&all_items)
+                        {
+                            metadata_index = Some(index);
+                            let (new_app, _) =
+                                std::mem::take(app).handle_event(Event::MetadataIndexed(count));
+                            *app = new_app;
                         }
                     }
                     Command::IndexMetadata { bucket } => {
-                        if let Ok(all_items) = s3_client.list_all_objects(&bucket).await {
-                            if let Ok(index) = s3v::search::MetadataIndex::new() {
-                                if let Ok(count) = index.insert_items(&all_items) {
-                                    metadata_index = Some(index);
-                                    let (new_app, _) = std::mem::take(app)
-                                        .handle_event(Event::MetadataIndexed(count));
-                                    *app = new_app;
-                                }
-                            }
+                        if let Ok(all_items) = s3_client.list_all_objects(&bucket).await
+                            && let Ok(index) = s3v::search::MetadataIndex::new()
+                            && let Ok(count) = index.insert_items(&all_items)
+                        {
+                            metadata_index = Some(index);
+                            let (new_app, _) =
+                                std::mem::take(app).handle_event(Event::MetadataIndexed(count));
+                            *app = new_app;
                         }
                     }
                     Command::ExecuteSearch(where_clause) => {
@@ -228,16 +214,14 @@ async fn run_app(
                                     *app = new_app;
                                 }
                                 Err(e) => {
-                                    let (new_app, _) = std::mem::take(app).handle_event(
-                                        Event::Error(format!("Search error: {}", e)),
-                                    );
+                                    let (new_app, _) = std::mem::take(app)
+                                        .handle_event(Event::Error(format!("Search error: {}", e)));
                                     *app = new_app;
                                 }
                             }
                         } else {
-                            let (new_app, _) = std::mem::take(app).handle_event(
-                                Event::Error("Metadata not indexed yet".to_string()),
-                            );
+                            let (new_app, _) = std::mem::take(app)
+                                .handle_event(Event::Error("Metadata not indexed yet".to_string()));
                             *app = new_app;
                         }
                     }
@@ -279,33 +263,28 @@ async fn handle_load_preview(
                     match s3v::preview::pdf::page_count(&raw_bytes) {
                         Ok(total) => match s3v::preview::pdf::render_page(&raw_bytes, 0) {
                             Ok(first_page_png) => {
-                                if let Ok(dyn_img) =
-                                    image::load_from_memory(&first_page_png)
-                                {
-                                    *image_state =
-                                        Some(picker.new_resize_protocol(dyn_img));
+                                if let Ok(dyn_img) = image::load_from_memory(&first_page_png) {
+                                    *image_state = Some(picker.new_resize_protocol(dyn_img));
                                 }
                                 *pdf_raw_bytes = Some(raw_bytes.to_vec());
                                 let (new_app, _) = std::mem::take(app).handle_event(
-                                    Event::PreviewLoaded(
-                                        s3v::preview::PreviewContent::Pdf {
-                                            pages: vec![first_page_png],
-                                            current_page: 0,
-                                            total_pages: total,
-                                        },
-                                    ),
+                                    Event::PreviewLoaded(s3v::preview::PreviewContent::Pdf {
+                                        pages: vec![first_page_png],
+                                        current_page: 0,
+                                        total_pages: total,
+                                    }),
                                 );
                                 *app = new_app;
                             }
                             Err(e) => {
-                                let (new_app, _) = std::mem::take(app)
-                                    .handle_event(Event::Error(e.to_string()));
+                                let (new_app, _) =
+                                    std::mem::take(app).handle_event(Event::Error(e.to_string()));
                                 *app = new_app;
                             }
                         },
                         Err(e) => {
-                            let (new_app, _) = std::mem::take(app)
-                                .handle_event(Event::Error(e.to_string()));
+                            let (new_app, _) =
+                                std::mem::take(app).handle_event(Event::Error(e.to_string()));
                             *app = new_app;
                         }
                     }
@@ -314,17 +293,15 @@ async fn handle_load_preview(
                     match image::load_from_memory(&raw_bytes) {
                         Ok(dyn_img) => {
                             *image_state = Some(picker.new_resize_protocol(dyn_img));
-                            let (new_app, _) = std::mem::take(app).handle_event(
-                                Event::PreviewLoaded(s3v::preview::PreviewContent::Image(
-                                    raw_bytes.to_vec(),
-                                )),
-                            );
+                            let (new_app, _) =
+                                std::mem::take(app).handle_event(Event::PreviewLoaded(
+                                    s3v::preview::PreviewContent::Image(raw_bytes.to_vec()),
+                                ));
                             *app = new_app;
                         }
                         Err(e) => {
-                            let (new_app, _) = std::mem::take(app).handle_event(Event::Error(
-                                format!("Image decode error: {}", e),
-                            ));
+                            let (new_app, _) = std::mem::take(app)
+                                .handle_event(Event::Error(format!("Image decode error: {}", e)));
                             *app = new_app;
                         }
                     }
@@ -332,21 +309,19 @@ async fn handle_load_preview(
                     // テキストプレビュー
                     let raw = String::from_utf8_lossy(&raw_bytes).to_string();
                     let formatted = s3v::preview::text::format_preview(&raw, key);
-                    let (new_app, _) = std::mem::take(app).handle_event(
-                        Event::PreviewLoaded(s3v::preview::PreviewContent::Text(formatted)),
-                    );
+                    let (new_app, _) = std::mem::take(app).handle_event(Event::PreviewLoaded(
+                        s3v::preview::PreviewContent::Text(formatted),
+                    ));
                     *app = new_app;
                 }
             }
             Err(e) => {
-                let (new_app, _) =
-                    std::mem::take(app).handle_event(Event::Error(e.to_string()));
+                let (new_app, _) = std::mem::take(app).handle_event(Event::Error(e.to_string()));
                 *app = new_app;
             }
         },
         Err(e) => {
-            let (new_app, _) =
-                std::mem::take(app).handle_event(Event::Error(e.to_string()));
+            let (new_app, _) = std::mem::take(app).handle_event(Event::Error(e.to_string()));
             *app = new_app;
         }
     }

@@ -1,6 +1,26 @@
 const PREVIEWABLE_EXTENSIONS: &[&str] = &[
-    "txt", "json", "md", "csv", "log", "yaml", "yml", "toml", "xml", "html", "css", "js", "ts",
-    "rs", "py", "go", "sh", "sql", "conf", "ini", "env", "dockerfile",
+    "txt",
+    "json",
+    "md",
+    "csv",
+    "log",
+    "yaml",
+    "yml",
+    "toml",
+    "xml",
+    "html",
+    "css",
+    "js",
+    "ts",
+    "rs",
+    "py",
+    "go",
+    "sh",
+    "sql",
+    "conf",
+    "ini",
+    "env",
+    "dockerfile",
 ];
 
 pub fn is_previewable(name: &str) -> bool {

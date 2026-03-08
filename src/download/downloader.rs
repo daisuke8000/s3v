@@ -25,7 +25,7 @@ pub async fn download_file(
         .await
         .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
 
-    let file_name = key.split('/').last().unwrap_or(key);
+    let file_name = key.split('/').next_back().unwrap_or(key);
     let file_path = destination.join(file_name);
 
     if let Some(parent) = file_path.parent() {

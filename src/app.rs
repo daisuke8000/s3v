@@ -110,7 +110,13 @@ impl App {
             ),
             Event::Error(msg) => {
                 eprintln!("Error: {}", msg);
-                (Self { mode: Mode::Normal, ..self }, None)
+                (
+                    Self {
+                        mode: Mode::Normal,
+                        ..self
+                    },
+                    None,
+                )
             }
             Event::Quit => (
                 Self {
@@ -210,41 +216,40 @@ impl App {
             total_pages,
             ..
         }) = &self.preview_content
+            && current_page + 1 < *total_pages
         {
-            if current_page + 1 < *total_pages {
-                let mut content = self.preview_content.clone();
-                if let Some(PreviewContent::Pdf {
-                    current_page: ref mut cp,
-                    ..
-                }) = content
-                {
-                    *cp += 1;
-                }
-                return Self {
-                    preview_content: content,
-                    ..self
-                };
+            let mut content = self.preview_content.clone();
+            if let Some(PreviewContent::Pdf {
+                current_page: ref mut cp,
+                ..
+            }) = content
+            {
+                *cp += 1;
             }
+            return Self {
+                preview_content: content,
+                ..self
+            };
         }
         self
     }
 
     fn prev_pdf_page(self) -> Self {
-        if let Some(PreviewContent::Pdf { current_page, .. }) = &self.preview_content {
-            if *current_page > 0 {
-                let mut content = self.preview_content.clone();
-                if let Some(PreviewContent::Pdf {
-                    current_page: ref mut cp,
-                    ..
-                }) = content
-                {
-                    *cp -= 1;
-                }
-                return Self {
-                    preview_content: content,
-                    ..self
-                };
+        if let Some(PreviewContent::Pdf { current_page, .. }) = &self.preview_content
+            && *current_page > 0
+        {
+            let mut content = self.preview_content.clone();
+            if let Some(PreviewContent::Pdf {
+                current_page: ref mut cp,
+                ..
+            }) = content
+            {
+                *cp -= 1;
             }
+            return Self {
+                preview_content: content,
+                ..self
+            };
         }
         self
     }
@@ -316,9 +321,7 @@ impl App {
                 )
             }
             S3Item::File {
-                ref key,
-                ref name,
-                ..
+                ref key, ref name, ..
             } => {
                 if crate::preview::text::is_previewable(name)
                     || crate::preview::image::is_image(name)
@@ -406,8 +409,7 @@ impl App {
             Some(k) => k,
             None => return (self, None),
         };
-        let destination =
-            dirs::download_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+        let destination = dirs::download_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
         (
             self,
             Some(Command::Download {
@@ -441,7 +443,7 @@ impl App {
             let re = regex::Regex::new(&format!("(?i){}", pattern)).ok();
             self.all_items
                 .iter()
-                .filter(|item| re.as_ref().map_or(true, |r| r.is_match(item.name())))
+                .filter(|item| re.as_ref().is_none_or(|r| r.is_match(item.name())))
                 .cloned()
                 .collect()
         };

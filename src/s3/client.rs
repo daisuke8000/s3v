@@ -134,8 +134,7 @@ impl S3Client {
                 if let Some(p) = prefix.prefix() {
                     let name = p
                         .split('/')
-                        .filter(|s| !s.is_empty())
-                        .last()
+                        .rfind(|s| !s.is_empty())
                         .map(|s| format!("{}/", s))
                         .unwrap_or_else(|| p.to_string());
                     all_items.push(S3Item::Folder {
@@ -150,7 +149,7 @@ impl S3Client {
                     if key.ends_with('/') {
                         continue;
                     }
-                    let name = key.split('/').last().unwrap_or(key).to_string();
+                    let name = key.split('/').next_back().unwrap_or(key).to_string();
                     let last_modified = obj.last_modified().map(|dt| {
                         dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
                             .unwrap_or_default()

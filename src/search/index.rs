@@ -9,8 +9,7 @@ pub struct MetadataIndex {
 
 impl MetadataIndex {
     pub fn new() -> Result<Self> {
-        let conn = Connection::open_in_memory()
-            .map_err(|e| S3vError::Terminal(e.to_string()))?;
+        let conn = Connection::open_in_memory().map_err(|e| S3vError::Terminal(e.to_string()))?;
 
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS objects (
@@ -86,8 +85,7 @@ impl MetadataIndex {
             }
         }
 
-        tx.commit()
-            .map_err(|e| S3vError::Terminal(e.to_string()))?;
+        tx.commit().map_err(|e| S3vError::Terminal(e.to_string()))?;
         Ok(count)
     }
 
