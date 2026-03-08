@@ -138,9 +138,7 @@ pub async fn handle_load_preview(
                             preview.image_state = Some(picker.new_resize_protocol(dyn_img));
                             dispatch_event(
                                 app,
-                                Event::PreviewLoaded(crate::preview::PreviewContent::Image(
-                                    raw_bytes.to_vec(),
-                                )),
+                                Event::PreviewLoaded(crate::preview::PreviewContent::Image),
                             );
                         }
                         Err(e) => {

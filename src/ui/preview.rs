@@ -35,7 +35,7 @@ pub fn render_preview(
                 .scroll((app.preview_scroll, 0));
             frame.render_widget(paragraph, area);
         }
-        Some(PreviewContent::Image(_)) => {
+        Some(PreviewContent::Image) => {
             if let Some(state) = image_state {
                 let inner = block.inner(area);
                 frame.render_widget(block, area);

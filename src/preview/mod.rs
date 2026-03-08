@@ -6,7 +6,7 @@ pub mod text;
 #[derive(Debug, Clone)]
 pub enum PreviewContent {
     Text(String),
-    Image(Vec<u8>),
+    Image,
     Pdf {
         current_page: usize,
         total_pages: usize,
