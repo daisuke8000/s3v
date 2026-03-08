@@ -94,7 +94,7 @@ async fn run_app(
             }
 
             let event = match app.mode {
-                s3v::Mode::Filter => Event::Key(key),
+                s3v::Mode::Filter | s3v::Mode::Preview => Event::Key(key),
                 _ => Event::from_key(key),
             };
             let (new_app, cmd) = std::mem::take(app).handle_event(event);
@@ -120,6 +120,42 @@ async fn run_app(
                             let (new_app, _) = std::mem::take(app)
                                 .handle_event(Event::Error(format!("Download error: {}", e)));
                             *app = new_app;
+                        }
+                    }
+                    Command::LoadPreview { bucket, key } => {
+                        match s3_client
+                            .inner()
+                            .get_object()
+                            .bucket(&bucket)
+                            .key(&key)
+                            .send()
+                            .await
+                        {
+                            Ok(output) => match output.body.collect().await {
+                                Ok(bytes) => {
+                                    let raw_bytes = bytes.into_bytes();
+                                    let raw =
+                                        String::from_utf8_lossy(&raw_bytes).to_string();
+                                    let formatted =
+                                        s3v::preview::text::format_preview(&raw, &key);
+                                    let (new_app, _) = std::mem::take(app).handle_event(
+                                        Event::PreviewLoaded(
+                                            s3v::preview::PreviewContent::Text(formatted),
+                                        ),
+                                    );
+                                    *app = new_app;
+                                }
+                                Err(e) => {
+                                    let (new_app, _) = std::mem::take(app)
+                                        .handle_event(Event::Error(e.to_string()));
+                                    *app = new_app;
+                                }
+                            },
+                            Err(e) => {
+                                let (new_app, _) = std::mem::take(app)
+                                    .handle_event(Event::Error(e.to_string()));
+                                *app = new_app;
+                            }
                         }
                     }
                     Command::LoadItems(path) => {

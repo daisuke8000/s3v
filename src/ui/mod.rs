@@ -1,5 +1,6 @@
 pub mod banner;
 pub mod layout;
+pub mod preview;
 pub mod theme;
 
 use ratatui::{
@@ -24,6 +25,11 @@ pub fn render(app: &App, frame: &mut Frame) {
             let is_loading = app.mode == Mode::Loading;
             banner::render_banner(frame, area, is_loading);
         }
+        return;
+    }
+
+    if app.mode == Mode::Preview {
+        preview::render_preview(app, frame, frame.area());
         return;
     }
 
@@ -148,7 +154,7 @@ fn render_list(app: &App, frame: &mut Frame, area: Rect) {
 
     let status = match app.mode {
         Mode::Loading => " Loading... ".to_string(),
-        Mode::Normal | Mode::Filter => String::new(),
+        _ => String::new(),
     };
 
     let list_block = Block::default()

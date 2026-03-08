@@ -340,6 +340,49 @@ fn test_filter_cancel() {
 }
 
 #[test]
+#[test]
+fn test_preview_mode_entry_for_text_file() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![S3Item::File {
+        name: "readme.md".into(),
+        key: "readme.md".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.mode = Mode::Normal;
+
+    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert_eq!(app.mode, Mode::Loading);
+    assert!(matches!(cmd, Some(Command::LoadPreview { .. })));
+}
+
+#[test]
+fn test_preview_scroll() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Preview;
+    app.preview_content = Some(s3v::preview::PreviewContent::Text("line1\nline2\nline3".into()));
+    app.preview_scroll = 0;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('j'))));
+    assert_eq!(app.preview_scroll, 1);
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('k'))));
+    assert_eq!(app.preview_scroll, 0);
+}
+
+#[test]
+fn test_preview_close() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Preview;
+    app.preview_content = Some(s3v::preview::PreviewContent::Text("content".into()));
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    assert_eq!(app.mode, Mode::Normal);
+    assert!(app.preview_content.is_none());
+}
+
+#[test]
 fn test_selection_cleared_on_navigation() {
     let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");

@@ -1,5 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use crate::preview::PreviewContent;
 use crate::s3::S3Item;
 
 /// アプリケーションイベント
@@ -9,6 +10,8 @@ pub enum Event {
     Key(KeyEvent),
     /// アイテム一覧の読み込み完了
     ItemsLoaded(Vec<S3Item>),
+    /// プレビューの読み込み完了
+    PreviewLoaded(PreviewContent),
     /// エラー発生
     Error(String),
     /// 終了要求

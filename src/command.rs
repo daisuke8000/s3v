@@ -13,6 +13,8 @@ pub enum Command {
         key: String,
         destination: PathBuf,
     },
+    /// ファイルのプレビューを読み込み
+    LoadPreview { bucket: String, key: String },
     /// アプリケーション終了
     Quit,
 }

@@ -3,6 +3,7 @@ pub mod cli;
 pub mod command;
 pub mod download;
 pub mod error;
+pub mod preview;
 pub mod event;
 pub mod s3;
 pub mod ui;

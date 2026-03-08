@@ -4,6 +4,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::command::Command;
 use crate::event::Event;
+use crate::preview::PreviewContent;
 use crate::s3::{S3Item, S3Path};
 
 /// アプリケーションモード
@@ -13,6 +14,7 @@ pub enum Mode {
     Normal,
     Loading,
     Filter,
+    Preview,
 }
 
 /// アプリケーション状態（Model）
@@ -36,6 +38,10 @@ pub struct App {
     pub filter: String,
     /// フィルタ適用前の全アイテム
     pub all_items: Vec<S3Item>,
+    /// プレビューコンテンツ
+    pub preview_content: Option<PreviewContent>,
+    /// プレビューのスクロール位置
+    pub preview_scroll: u16,
 }
 
 impl Default for App {
@@ -56,6 +62,8 @@ impl App {
             selected: HashSet::new(),
             filter: String::new(),
             all_items: Vec::new(),
+            preview_content: None,
+            preview_scroll: 0,
         }
     }
 
@@ -64,9 +72,18 @@ impl App {
         match event {
             Event::Key(key) => self.handle_key(key),
             Event::ItemsLoaded(items) => self.handle_items_loaded(items),
+            Event::PreviewLoaded(content) => (
+                Self {
+                    preview_content: Some(content),
+                    preview_scroll: 0,
+                    mode: Mode::Preview,
+                    ..self
+                },
+                None,
+            ),
             Event::Error(msg) => {
                 eprintln!("Error: {}", msg);
-                (self, None)
+                (Self { mode: Mode::Normal, ..self }, None)
             }
             Event::Quit => (
                 Self {
@@ -92,6 +109,7 @@ impl App {
 
         match self.mode {
             Mode::Filter => self.handle_filter_key(key),
+            Mode::Preview => self.handle_preview_key(key),
             _ => self.handle_normal_key(key),
         }
     }
@@ -122,6 +140,35 @@ impl App {
                 self.filter.push(c);
                 (self, None)
             }
+            _ => (self, None),
+        }
+    }
+
+    fn handle_preview_key(self, key: KeyEvent) -> (Self, Option<Command>) {
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => (
+                Self {
+                    mode: Mode::Normal,
+                    preview_content: None,
+                    preview_scroll: 0,
+                    ..self
+                },
+                None,
+            ),
+            KeyCode::Down | KeyCode::Char('j') => (
+                Self {
+                    preview_scroll: self.preview_scroll.saturating_add(1),
+                    ..self
+                },
+                None,
+            ),
+            KeyCode::Up | KeyCode::Char('k') => (
+                Self {
+                    preview_scroll: self.preview_scroll.saturating_sub(1),
+                    ..self
+                },
+                None,
+            ),
             _ => (self, None),
         }
     }
@@ -160,42 +207,59 @@ impl App {
     }
 
     fn enter_item(self) -> (Self, Option<Command>) {
-        if let Some(item) = self.items.get(self.cursor) {
-            match item {
-                S3Item::Bucket { name } => {
-                    let new_path = S3Path::bucket(name);
+        let item = match self.items.get(self.cursor) {
+            Some(item) => item.clone(),
+            None => return (self, None),
+        };
+        match item {
+            S3Item::Bucket { ref name } => {
+                let new_path = S3Path::bucket(name);
+                (
+                    Self {
+                        current_path: new_path.clone(),
+                        mode: Mode::Loading,
+                        selected: HashSet::new(),
+                        ..self
+                    },
+                    Some(Command::LoadItems(new_path)),
+                )
+            }
+            S3Item::Folder { ref prefix, .. } => {
+                let new_path = S3Path::with_prefix(
+                    self.current_path.bucket.clone().unwrap_or_default(),
+                    prefix,
+                );
+                (
+                    Self {
+                        current_path: new_path.clone(),
+                        mode: Mode::Loading,
+                        selected: HashSet::new(),
+                        ..self
+                    },
+                    Some(Command::LoadItems(new_path)),
+                )
+            }
+            S3Item::File {
+                ref key,
+                ref name,
+                ..
+            } => {
+                if crate::preview::text::is_previewable(name) {
+                    let bucket = self.current_path.bucket.clone().unwrap_or_default();
                     (
                         Self {
-                            current_path: new_path.clone(),
                             mode: Mode::Loading,
-                            selected: HashSet::new(),
                             ..self
                         },
-                        Some(Command::LoadItems(new_path)),
+                        Some(Command::LoadPreview {
+                            bucket,
+                            key: key.clone(),
+                        }),
                     )
-                }
-                S3Item::Folder { prefix, .. } => {
-                    let new_path = S3Path::with_prefix(
-                        self.current_path.bucket.clone().unwrap_or_default(),
-                        prefix,
-                    );
-                    (
-                        Self {
-                            current_path: new_path.clone(),
-                            mode: Mode::Loading,
-                            selected: HashSet::new(),
-                            ..self
-                        },
-                        Some(Command::LoadItems(new_path)),
-                    )
-                }
-                S3Item::File { .. } => {
-                    // Phase 1 ではファイルプレビューは未実装
+                } else {
                     (self, None)
                 }
             }
-        } else {
-            (self, None)
         }
     }
 
