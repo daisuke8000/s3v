@@ -85,7 +85,14 @@ impl App {
                 (vec![key.clone()], String::new())
             }
             Some(super::download::DownloadTarget::Folder { prefix, keys, .. }) => {
-                (keys.clone(), prefix.clone())
+                // prefix の親を base_prefix にし、フォルダ名をローカルに保持する
+                // e.g. prefix="photos/vacation/" → parent="photos/" → relative="vacation/file.txt"
+                let parent_prefix = prefix
+                    .trim_end_matches('/')
+                    .rfind('/')
+                    .map(|i| &prefix[..=i])
+                    .unwrap_or("");
+                (keys.clone(), parent_prefix.to_string())
             }
             None => return (self, vec![]),
         };
