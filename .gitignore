@@ -4,3 +4,13 @@ CLAUDE.md
 .claude/
 .worktrees/
 
+# Secrets & credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+
+# OS artifacts
+.DS_Store
+
