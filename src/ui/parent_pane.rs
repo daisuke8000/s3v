@@ -104,13 +104,14 @@ pub fn render_folder_preview(app: &App, frame: &mut Frame, area: Rect) {
     frame.render_widget(list, area);
 }
 
-/// 名前を指定幅に切り詰める
+/// 名前を指定幅（文字数ベース）に切り詰める
 fn truncate_name(name: &str, max_width: usize) -> String {
-    if name.len() <= max_width {
+    if name.chars().count() <= max_width {
         name.to_string()
     } else if max_width > 3 {
-        format!("{}...", &name[..max_width - 3])
+        let truncated: String = name.chars().take(max_width - 3).collect();
+        format!("{}...", truncated)
     } else {
-        name[..max_width].to_string()
+        name.chars().take(max_width).collect()
     }
 }

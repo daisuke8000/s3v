@@ -1,41 +1,37 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use aws_sdk_s3::Client;
 use tokio::io::AsyncWriteExt;
 
 use crate::error::{Result, S3vError};
 
-pub async fn download_file(
-    client: &Client,
-    bucket: &str,
-    key: &str,
-    destination: &Path,
-) -> Result<()> {
-    let resp = client
-        .get_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-        .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
-
-    let body = resp
-        .body
-        .collect()
-        .await
-        .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
-
-    let file_name = key.split('/').next_back().unwrap_or(key);
-    let file_path = unique_path(&destination.join(file_name));
-
-    if let Some(parent) = file_path.parent() {
-        tokio::fs::create_dir_all(parent).await?;
+/// パスを正規化して `.` や `..` を解決する（ファイルシステムにアクセスせずに）
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for c in path.components() {
+        match c {
+            Component::ParentDir => {
+                out.pop();
+            }
+            Component::CurDir => {}
+            c => out.push(c),
+        }
     }
+    out
+}
 
-    let mut file = tokio::fs::File::create(&file_path).await?;
-    file.write_all(&body.into_bytes()).await?;
-
-    Ok(())
+/// 結合後のパスが destination 配下であることを検証（パストラバーサル防止）
+fn validate_download_path(destination: &Path, relative: &str) -> Result<PathBuf> {
+    let file_path = destination.join(relative);
+    let normalized = normalize_path(&file_path);
+    let normalized_dest = normalize_path(destination);
+    if !normalized.starts_with(&normalized_dest) {
+        return Err(S3vError::Io(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "Path traversal detected in S3 key",
+        )));
+    }
+    Ok(unique_path(&file_path))
 }
 
 /// フォルダ構造を保持したダウンロード
@@ -64,7 +60,7 @@ pub async fn download_file_with_structure(
     // base_prefix を除去して相対パスを得る
     let relative = key.strip_prefix(base_prefix).unwrap_or(key);
 
-    let file_path = unique_path(&destination.join(relative));
+    let file_path = validate_download_path(destination, relative)?;
 
     if let Some(parent) = file_path.parent() {
         tokio::fs::create_dir_all(parent).await?;

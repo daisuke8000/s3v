@@ -15,6 +15,9 @@ use super::preview_state::PreviewState;
 /// ストリーミング読み込みのバッファサイズ（64KB）
 const STREAM_BUFFER_SIZE: usize = 64 * 1024;
 
+/// 画像プレビューの最大サイズ（50MB）
+const IMAGE_PREVIEW_MAX_BYTES: u64 = 50 * 1024 * 1024;
+
 /// 画像プレビュー（S3 ダウンロード + デコードを全て spawn 内で実行）
 pub(crate) fn start_image_download(
     app: &mut App,
@@ -50,7 +53,20 @@ pub(crate) fn start_image_download(
             }
         };
 
-        let content_length = output.content_length().map(|l| l as u64);
+        let content_length = output.content_length().and_then(|l| u64::try_from(l).ok());
+
+        // サイズ制限チェック
+        if let Some(len) = content_length
+            && len > IMAGE_PREVIEW_MAX_BYTES
+        {
+            let _ = tx.send(Event::Error(format!(
+                "Image too large for preview ({:.1}MB, limit {:.0}MB)",
+                len as f64 / 1_048_576.0,
+                IMAGE_PREVIEW_MAX_BYTES as f64 / 1_048_576.0
+            )));
+            return;
+        }
+
         let mut reader = output.body.into_async_read();
         let mut all_bytes = Vec::new();
         let mut buf = vec![0u8; STREAM_BUFFER_SIZE];

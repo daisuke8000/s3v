@@ -90,12 +90,7 @@ impl MetadataIndex {
     }
 
     pub fn search(&self, where_clause: &str) -> Result<Vec<S3Item>> {
-        // セミコロンを含むクエリを拒否（複数ステートメント防止）
-        if where_clause.contains(';') {
-            return Err(S3vError::Search(
-                "Invalid query: semicolons are not allowed".to_string(),
-            ));
-        }
+        validate_where_clause(where_clause)?;
 
         let sql = format!(
             "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE {}",
@@ -105,7 +100,7 @@ impl MetadataIndex {
         let mut stmt = self
             .conn
             .prepare(&sql)
-            .map_err(|e| S3vError::Search(format!("SQL error: {}", e)))?;
+            .map_err(|_| S3vError::Search("Invalid SQL query".to_string()))?;
 
         let items = stmt
             .query_map([], |row| {
@@ -134,10 +129,22 @@ impl MetadataIndex {
         }
         Ok(result)
     }
+}
 
-    pub fn count(&self) -> usize {
-        self.conn
-            .query_row("SELECT COUNT(*) FROM objects", [], |row| row.get(0))
-            .unwrap_or(0)
+/// WHERE 句の入力を検証し、危険なキーワードを拒否する
+fn validate_where_clause(clause: &str) -> Result<()> {
+    let lower = clause.to_lowercase();
+    let denied = [
+        ";", "--", "/*", "attach", "pragma", "drop", "delete", "insert", "update", "create",
+        "alter", "detach", "reindex", "vacuum",
+    ];
+    for keyword in &denied {
+        if lower.contains(keyword) {
+            return Err(S3vError::Search(format!(
+                "Invalid query: '{}' is not allowed",
+                keyword
+            )));
+        }
     }
+    Ok(())
 }

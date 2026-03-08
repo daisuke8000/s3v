@@ -3,19 +3,17 @@ use aws_sdk_s3::Client;
 use crate::error::{Result, S3vError};
 use crate::s3::{S3Item, S3Path};
 
+/// オブジェクト列挙の上限（メモリ保護）
+const MAX_LIST_ITEMS: usize = 100_000;
+
 #[derive(Clone)]
 pub struct S3Client {
     client: Client,
-    region: String,
 }
 
 impl S3Client {
-    pub fn new(client: Client, region: String) -> Self {
-        Self { client, region }
-    }
-
-    pub fn region(&self) -> &str {
-        &self.region
+    pub fn new(client: Client, _region: String) -> Self {
+        Self { client }
     }
 
     pub fn inner(&self) -> &Client {
@@ -93,6 +91,7 @@ impl S3Client {
     }
 
     /// 指定 prefix 配下の全ファイルを再帰取得（ページネーション対応、delimiter なし）
+    /// 上限 MAX_LIST_ITEMS 件で打ち切り（メモリ保護）
     pub async fn list_all_files(&self, bucket: &str, prefix: &str) -> Result<Vec<S3Item>> {
         let mut all_items = Vec::new();
         let mut continuation_token: Option<String> = None;
@@ -113,6 +112,9 @@ impl S3Client {
                 if let Some(item) = object_to_item(obj, "") {
                     all_items.push(item);
                 }
+                if all_items.len() >= MAX_LIST_ITEMS {
+                    return Ok(all_items);
+                }
             }
 
             if resp.is_truncated() == Some(true) {
@@ -126,6 +128,7 @@ impl S3Client {
     }
 
     /// バケット内の全オブジェクトを列挙（ページネーション対応）
+    /// 上限 MAX_LIST_ITEMS 件で打ち切り（メモリ保護）
     pub async fn list_all_objects(&self, bucket: &str) -> Result<Vec<S3Item>> {
         let mut all_items = Vec::new();
         let mut continuation_token: Option<String> = None;
@@ -159,6 +162,9 @@ impl S3Client {
             for obj in resp.contents() {
                 if let Some(item) = object_to_item(obj, "") {
                     all_items.push(item);
+                }
+                if all_items.len() >= MAX_LIST_ITEMS {
+                    return Ok(all_items);
                 }
             }
 
@@ -203,7 +209,7 @@ fn object_to_item(obj: &aws_sdk_s3::types::Object, strip_prefix: &str) -> Option
     Some(S3Item::File {
         name,
         key: key.to_string(),
-        size: obj.size().unwrap_or(0) as u64,
+        size: obj.size().unwrap_or(0).max(0) as u64,
         last_modified,
     })
 }

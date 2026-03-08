@@ -15,6 +15,9 @@ use crate::s3::S3Client;
 use super::dispatch_event;
 use super::preview_state::PreviewState;
 
+/// PDF プレビューの最大サイズ（200MB）
+const PDF_PREVIEW_MAX_BYTES: u64 = 200 * 1024 * 1024;
+
 /// PDF ダウンロード（S3 download + body.collect を spawn 内で実行）
 pub(crate) fn start_pdf_download(
     preview: &mut PreviewState,
@@ -41,6 +44,18 @@ pub(crate) fn start_pdf_download(
         };
 
         if cancel.load(Ordering::Relaxed) {
+            return;
+        }
+
+        // サイズ制限チェック
+        if let Some(len) = output.content_length().and_then(|l| u64::try_from(l).ok())
+            && len > PDF_PREVIEW_MAX_BYTES
+        {
+            let _ = tx.send(Event::Error(format!(
+                "PDF too large for preview ({:.1}MB, limit {:.0}MB)",
+                len as f64 / 1_048_576.0,
+                PDF_PREVIEW_MAX_BYTES as f64 / 1_048_576.0
+            )));
             return;
         }
 
