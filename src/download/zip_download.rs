@@ -28,18 +28,25 @@ pub fn zip_destination(
 }
 
 /// Write a single file entry into a zip archive.
+/// Rejects paths containing `..` to prevent path traversal in zip entries.
 pub fn write_zip_entry<W: Write + std::io::Seek>(
     writer: &mut ZipWriter<W>,
     relative_path: &str,
     data: &[u8],
 ) -> Result<()> {
+    // Path traversal prevention
+    if relative_path.split('/').any(|seg| seg == "..") {
+        return Err(S3vError::Io(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "Path traversal detected in zip entry path",
+        )));
+    }
+
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     writer
         .start_file(relative_path, options)
         .map_err(|e| S3vError::Io(std::io::Error::other(e.to_string())))?;
-    writer
-        .write_all(data)
-        .map_err(|e| S3vError::Io(std::io::Error::other(e.to_string())))?;
+    writer.write_all(data)?;
     Ok(())
 }
 
@@ -80,6 +87,14 @@ mod tests {
         assert!(result.is_ok());
         let finished = writer.finish().unwrap();
         assert!(!finished.into_inner().is_empty());
+    }
+
+    #[test]
+    fn test_write_zip_entry_rejects_path_traversal() {
+        let buf = Cursor::new(Vec::new());
+        let mut writer = ZipWriter::new(buf);
+        let result = write_zip_entry(&mut writer, "../etc/passwd", b"bad");
+        assert!(result.is_err());
     }
 
     #[test]
