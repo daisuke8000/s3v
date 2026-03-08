@@ -9,16 +9,9 @@ use crossterm::{
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
 use ratatui_image::picker::Picker;
-use ratatui_image::protocol::StatefulProtocol;
 
 use s3v::{App, Cli, Command, Event, S3Client};
-
-/// App にイベントを送信し、状態を更新するヘルパー
-fn dispatch_event(app: &mut App, event: Event) -> Option<Command> {
-    let (new_app, cmd) = std::mem::take(app).handle_event(event);
-    *app = new_app;
-    cmd
-}
+use s3v::command_handler::{PreviewState, dispatch_event, handle_load_preview, update_pdf_page};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -92,44 +85,12 @@ async fn run_app(
     s3_client: &S3Client,
     picker: &mut Picker,
 ) -> anyhow::Result<()> {
-    let mut preview = PreviewState {
-        image_state: None,
-        pdf_raw_bytes: None,
-        last_pdf_page: None,
-    };
+    let mut preview = PreviewState::new();
     let mut metadata_index: Option<s3v::search::MetadataIndex> = None;
 
     loop {
         // PDF ページ変更検知 → 再レンダリング
-        if let Some(s3v::preview::PreviewContent::Pdf {
-            current_page,
-            total_pages: _,
-        }) = &app.preview_content
-        {
-            let current = *current_page;
-            if preview.last_pdf_page != Some(current)
-                && let Some(ref raw) = preview.pdf_raw_bytes
-            {
-                let bytes_clone = raw.clone();
-                let page = current;
-                let result = tokio::task::spawn_blocking(move || {
-                    s3v::preview::pdf::render_page_to_image(&bytes_clone, page)
-                })
-                .await;
-                match result {
-                    Ok(Ok(dyn_img)) => {
-                        preview.image_state = Some(picker.new_resize_protocol(dyn_img));
-                    }
-                    Ok(Err(e)) => {
-                        dispatch_event(app, Event::Error(format!("PDF render error: {}", e)));
-                    }
-                    Err(e) => {
-                        dispatch_event(app, Event::Error(format!("PDF task error: {}", e)));
-                    }
-                }
-                preview.last_pdf_page = Some(current);
-            }
-        }
+        update_pdf_page(app, &mut preview, picker).await;
 
         // 描画
         terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
@@ -151,9 +112,7 @@ async fn run_app(
 
             // Preview モードを抜けたらプレビュー状態をクリア
             if app.mode != s3v::Mode::Preview {
-                preview.image_state = None;
-                preview.pdf_raw_bytes = None;
-                preview.last_pdf_page = None;
+                preview.clear();
             }
 
             // Loading 状態なら即座に再描画（ブロッキング処理前に表示更新）
@@ -249,104 +208,4 @@ async fn run_app(
     }
 
     Ok(())
-}
-
-/// プレビュー描画用のランタイム状態（App に入れられない non-Clone 型を管理）
-struct PreviewState {
-    image_state: Option<StatefulProtocol>,
-    pdf_raw_bytes: Option<Vec<u8>>,
-    last_pdf_page: Option<usize>,
-}
-
-async fn handle_load_preview(
-    app: &mut App,
-    s3_client: &S3Client,
-    picker: &mut Picker,
-    preview: &mut PreviewState,
-    bucket: &str,
-    key: &str,
-) {
-    match s3_client
-        .inner()
-        .get_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-    {
-        Ok(output) => match output.body.collect().await {
-            Ok(bytes) => {
-                let raw_bytes = bytes.into_bytes();
-
-                if s3v::preview::pdf::is_pdf(key) {
-                    // PDF 画像レンダリングプレビュー（spawn_blocking でブロッキング回避）
-                    let pdf_bytes = raw_bytes.to_vec();
-                    let bytes_for_count = pdf_bytes.clone();
-                    let bytes_for_render = pdf_bytes.clone();
-                    let result = tokio::task::spawn_blocking(move || {
-                        let total = s3v::preview::pdf::page_count(&bytes_for_count)?;
-                        let img = s3v::preview::pdf::render_page_to_image(&bytes_for_render, 0)?;
-                        Ok::<(usize, image::DynamicImage), s3v::error::S3vError>((total, img))
-                    })
-                    .await;
-                    match result {
-                        Ok(Ok((total_pages, dyn_img))) => {
-                            preview.image_state = Some(picker.new_resize_protocol(dyn_img));
-                            preview.pdf_raw_bytes = Some(pdf_bytes);
-                            preview.last_pdf_page = Some(0);
-                            dispatch_event(
-                                app,
-                                Event::PreviewLoaded(s3v::preview::PreviewContent::Pdf {
-                                    current_page: 0,
-                                    total_pages,
-                                }),
-                            );
-                        }
-                        Ok(Err(e)) => {
-                            dispatch_event(app, Event::Error(e.to_string()));
-                        }
-                        Err(e) => {
-                            dispatch_event(
-                                app,
-                                Event::Error(format!("PDF task error: {}", e)),
-                            );
-                        }
-                    }
-                } else if s3v::preview::image::is_image(key) {
-                    // 画像プレビュー
-                    match image::load_from_memory(&raw_bytes) {
-                        Ok(dyn_img) => {
-                            preview.image_state = Some(picker.new_resize_protocol(dyn_img));
-                            dispatch_event(
-                                app,
-                                Event::PreviewLoaded(s3v::preview::PreviewContent::Image(
-                                    raw_bytes.to_vec(),
-                                )),
-                            );
-                        }
-                        Err(e) => {
-                            dispatch_event(
-                                app,
-                                Event::Error(format!("Image decode error: {}", e)),
-                            );
-                        }
-                    }
-                } else {
-                    // テキストプレビュー
-                    let raw = String::from_utf8_lossy(&raw_bytes).to_string();
-                    let formatted = s3v::preview::text::format_preview(&raw, key);
-                    dispatch_event(
-                        app,
-                        Event::PreviewLoaded(s3v::preview::PreviewContent::Text(formatted)),
-                    );
-                }
-            }
-            Err(e) => {
-                dispatch_event(app, Event::Error(e.to_string()));
-            }
-        },
-        Err(e) => {
-            dispatch_event(app, Event::Error(e.to_string()));
-        }
-    }
 }
