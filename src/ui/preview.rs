@@ -5,13 +5,20 @@ use ratatui::{
     text::Span,
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
 };
+use ratatui_image::StatefulImage;
+use ratatui_image::protocol::StatefulProtocol;
 
 use crate::app::App;
 use crate::preview::PreviewContent;
 
 use super::theme::theme;
 
-pub fn render_preview(app: &App, frame: &mut Frame, area: Rect) {
+pub fn render_preview(
+    app: &App,
+    frame: &mut Frame,
+    area: Rect,
+    image_state: Option<&mut StatefulProtocol>,
+) {
     let t = theme();
     let block = Block::default()
         .borders(Borders::ALL)
@@ -24,11 +31,22 @@ pub fn render_preview(app: &App, frame: &mut Frame, area: Rect) {
                 .add_modifier(Modifier::BOLD),
         ));
 
-    if let Some(PreviewContent::Text(content)) = &app.preview_content {
-        let paragraph = Paragraph::new(content.as_str())
-            .block(block)
-            .wrap(Wrap { trim: false })
-            .scroll((app.preview_scroll, 0));
-        frame.render_widget(paragraph, area);
+    match &app.preview_content {
+        Some(PreviewContent::Text(content)) => {
+            let paragraph = Paragraph::new(content.as_str())
+                .block(block)
+                .wrap(Wrap { trim: false })
+                .scroll((app.preview_scroll, 0));
+            frame.render_widget(paragraph, area);
+        }
+        Some(PreviewContent::Image(_)) => {
+            if let Some(state) = image_state {
+                let inner = block.inner(area);
+                frame.render_widget(block, area);
+                let image_widget = StatefulImage::default();
+                frame.render_stateful_widget(image_widget, inner, state);
+            }
+        }
+        _ => {}
     }
 }

@@ -10,6 +10,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
 };
+use ratatui_image::protocol::StatefulProtocol;
 
 use crate::app::{App, Mode};
 use crate::s3::S3Item;
@@ -18,7 +19,7 @@ use layout::AppLayout;
 use theme::theme;
 
 /// メイン描画関数（純粋関数）
-pub fn render(app: &App, frame: &mut Frame) {
+pub fn render(app: &App, frame: &mut Frame, image_state: Option<&mut StatefulProtocol>) {
     if app.show_banner {
         let layout = AppLayout::banner(frame.area());
         if let AppLayout::Banner { area } = layout {
@@ -29,7 +30,7 @@ pub fn render(app: &App, frame: &mut Frame) {
     }
 
     if app.mode == Mode::Preview {
-        preview::render_preview(app, frame, frame.area());
+        preview::render_preview(app, frame, frame.area(), image_state);
         return;
     }
 

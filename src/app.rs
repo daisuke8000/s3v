@@ -244,7 +244,9 @@ impl App {
                 ref name,
                 ..
             } => {
-                if crate::preview::text::is_previewable(name) {
+                if crate::preview::text::is_previewable(name)
+                    || crate::preview::image::is_image(name)
+                {
                     let bucket = self.current_path.bucket.clone().unwrap_or_default();
                     (
                         Self {
