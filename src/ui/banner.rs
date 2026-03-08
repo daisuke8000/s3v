@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 /// 起動バナーを描画する
-pub fn render_banner(frame: &mut Frame, area: Rect) {
+pub fn render_banner(frame: &mut Frame, area: Rect, is_loading: bool) {
     let banner_text = generate_banner();
     let version_line = Line::from(vec![
         Span::styled(
@@ -23,15 +23,22 @@ pub fn render_banner(frame: &mut Frame, area: Rect) {
             Style::default().fg(Color::DarkGray),
         ),
     ]);
-    let loading_line = Line::from(Span::styled(
-        "Loading...",
-        Style::default().fg(Color::DarkGray),
-    ));
+    let status_line = if is_loading {
+        Line::from(Span::styled(
+            "Loading...",
+            Style::default().fg(Color::DarkGray),
+        ))
+    } else {
+        Line::from(Span::styled(
+            "Press any key to continue",
+            Style::default().fg(Color::Cyan),
+        ))
+    };
 
     let mut lines = banner_text.lines;
     lines.push(Line::raw(""));
     lines.push(version_line);
-    lines.push(loading_line);
+    lines.push(status_line);
 
     let banner = Paragraph::new(Text::from(lines)).alignment(Alignment::Center);
 

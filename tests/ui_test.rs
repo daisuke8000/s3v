@@ -34,8 +34,8 @@ fn test_ui_renders_startup_banner() {
 }
 
 #[test]
-fn test_ui_renders_normal_after_items_loaded() {
-    let app = App::new();
+fn test_ui_renders_normal_after_banner_dismissed() {
+    let mut app = App::new();
     let items = vec![
         S3Item::Bucket {
             name: "my-bucket-1".to_string(),
@@ -44,9 +44,9 @@ fn test_ui_renders_normal_after_items_loaded() {
             name: "my-bucket-2".to_string(),
         },
     ];
-    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
-
-    assert!(!app.show_banner);
+    let (new_app, _) = app.handle_event(Event::ItemsLoaded(items));
+    app = new_app;
+    app.show_banner = false; // キー押下でバナーが閉じた状態をシミュレート
 
     let output = render_to_string(&app, 80, 24);
 

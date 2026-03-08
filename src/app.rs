@@ -67,6 +67,17 @@ impl App {
     }
 
     fn handle_key(self, key: KeyEvent) -> (Self, Option<Command>) {
+        // バナー表示中は任意のキーでバナーを閉じる
+        if self.show_banner {
+            return (
+                Self {
+                    show_banner: false,
+                    ..self
+                },
+                None,
+            );
+        }
+
         match key.code {
             KeyCode::Up | KeyCode::Char('k') => (self.move_cursor_up(), None),
             KeyCode::Down | KeyCode::Char('j') => (self.move_cursor_down(), None),
@@ -82,7 +93,6 @@ impl App {
                 items,
                 cursor: 0,
                 mode: Mode::Normal,
-                show_banner: false,
                 ..self
             },
             None,

@@ -56,6 +56,9 @@ async fn main() -> anyhow::Result<()> {
     let mut app = App::new();
     app.current_path = initial_path.clone();
 
+    // バナー描画（初期ロード前に1フレーム描画）
+    terminal.draw(|f| s3v::ui::render(&app, f))?;
+
     // 初期ロード
     let initial_items = s3_client.list(&initial_path).await.unwrap_or_default();
     let (new_app, _) = app.handle_event(Event::ItemsLoaded(initial_items));

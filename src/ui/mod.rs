@@ -21,7 +21,8 @@ pub fn render(app: &App, frame: &mut Frame) {
     if app.show_banner {
         let layout = AppLayout::banner(frame.area());
         if let AppLayout::Banner { area } = layout {
-            banner::render_banner(frame, area);
+            let is_loading = app.mode == Mode::Loading;
+            banner::render_banner(frame, area, is_loading);
         }
         return;
     }

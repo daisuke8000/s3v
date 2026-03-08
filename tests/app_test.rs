@@ -5,6 +5,13 @@ fn key_event(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::empty())
 }
 
+/// バナーを閉じた状態の App を作成するヘルパー
+fn app_without_banner() -> App {
+    let mut app = App::new();
+    app.show_banner = false;
+    app
+}
+
 #[test]
 fn test_app_initial_state() {
     let app = App::new();
@@ -13,6 +20,7 @@ fn test_app_initial_state() {
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Loading);
     assert!(app.running);
+    assert!(app.show_banner);
 }
 
 #[test]
@@ -31,12 +39,27 @@ fn test_app_items_loaded() {
     assert_eq!(app.items.len(), 2);
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Normal);
+    assert!(app.show_banner, "Banner should remain after items loaded");
     assert!(cmd.is_none());
 }
 
 #[test]
+fn test_app_banner_dismissed_by_keypress() {
+    let app = App::new();
+    assert!(app.show_banner, "Banner should show on startup");
+
+    // 任意のキーでバナーを閉じる
+    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert!(!app.show_banner, "Banner should hide after keypress");
+    assert!(
+        cmd.is_none(),
+        "Dismissing banner should not produce a command"
+    );
+}
+
+#[test]
 fn test_app_cursor_movement() {
-    let mut app = App::new();
+    let mut app = app_without_banner();
     app.items = vec![
         S3Item::Bucket {
             name: "bucket-1".to_string(),
@@ -75,7 +98,7 @@ fn test_app_cursor_movement() {
 
 #[test]
 fn test_app_enter_bucket() {
-    let mut app = App::new();
+    let mut app = app_without_banner();
     app.items = vec![S3Item::Bucket {
         name: "my-bucket".to_string(),
     }];
@@ -96,7 +119,7 @@ fn test_app_enter_bucket() {
 
 #[test]
 fn test_app_enter_folder() {
-    let mut app = App::new();
+    let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");
     app.items = vec![S3Item::Folder {
         name: "folder/".to_string(),
@@ -119,7 +142,7 @@ fn test_app_enter_folder() {
 
 #[test]
 fn test_app_go_back() {
-    let mut app = App::new();
+    let mut app = app_without_banner();
     app.current_path = S3Path::with_prefix("my-bucket", "folder/subfolder/");
     app.mode = Mode::Normal;
 
@@ -138,7 +161,7 @@ fn test_app_go_back() {
 
 #[test]
 fn test_app_go_back_to_root() {
-    let mut app = App::new();
+    let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");
     app.mode = Mode::Normal;
 
@@ -161,16 +184,4 @@ fn test_app_quit() {
 
     assert!(!app.running);
     assert!(matches!(cmd, Some(Command::Quit)));
-}
-
-#[test]
-fn test_app_banner_hidden_after_items_loaded() {
-    let app = App::new();
-    assert!(app.show_banner, "Banner should show on startup");
-
-    let items = vec![S3Item::Bucket {
-        name: "bucket-1".to_string(),
-    }];
-    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
-    assert!(!app.show_banner, "Banner should hide after items loaded");
 }
