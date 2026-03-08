@@ -53,6 +53,21 @@ pub struct App {
     pub error_message: Option<String>,
 }
 
+/// テキスト入力フィールドの共通キー処理
+fn handle_text_input(field: &mut String, key: KeyEvent) -> bool {
+    match key.code {
+        KeyCode::Backspace => {
+            field.pop();
+            true
+        }
+        KeyCode::Char(c) => {
+            field.push(c);
+            true
+        }
+        _ => false,
+    }
+}
+
 impl Default for App {
     fn default() -> Self {
         Self::new()
@@ -171,15 +186,10 @@ impl App {
         match key.code {
             KeyCode::Enter => (self.apply_filter(), None),
             KeyCode::Esc => (self.clear_filter(), None),
-            KeyCode::Backspace => {
-                self.filter.pop();
+            _ => {
+                handle_text_input(&mut self.filter, key);
                 (self, None)
             }
-            KeyCode::Char(c) => {
-                self.filter.push(c);
-                (self, None)
-            }
-            _ => (self, None),
         }
     }
 
@@ -496,15 +506,10 @@ impl App {
                 },
                 None,
             ),
-            KeyCode::Backspace => {
-                self.search_query.pop();
+            _ => {
+                handle_text_input(&mut self.search_query, key);
                 (self, None)
             }
-            KeyCode::Char(c) => {
-                self.search_query.push(c);
-                (self, None)
-            }
-            _ => (self, None),
         }
     }
 }
