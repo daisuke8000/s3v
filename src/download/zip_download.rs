@@ -1,6 +1,8 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use aws_sdk_s3::Client;
+use tokio::sync::mpsc;
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
@@ -47,6 +49,52 @@ pub fn write_zip_entry<W: Write + std::io::Seek>(
         .start_file(relative_path, options)
         .map_err(|e| S3vError::Io(std::io::Error::other(e.to_string())))?;
     writer.write_all(data)?;
+    Ok(())
+}
+
+/// Download multiple files from S3 and write them directly into a zip archive.
+pub async fn download_as_zip(
+    client: &Client,
+    bucket: &str,
+    keys: &[String],
+    zip_path: &Path,
+    base_prefix: &str,
+    progress_tx: mpsc::UnboundedSender<(usize, usize, String)>,
+) -> Result<()> {
+    // Create parent directory if needed
+    if let Some(parent) = zip_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let file = std::fs::File::create(zip_path)?;
+    let mut zip = ZipWriter::new(file);
+    let total = keys.len();
+
+    for (i, key) in keys.iter().enumerate() {
+        let resp = client
+            .get_object()
+            .bucket(bucket)
+            .key(key)
+            .send()
+            .await
+            .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
+
+        let body = resp
+            .body
+            .collect()
+            .await
+            .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
+
+        let relative = key.strip_prefix(base_prefix).unwrap_or(key);
+        write_zip_entry(&mut zip, relative, &body.into_bytes())?;
+
+        let file_name = key.split('/').next_back().unwrap_or(key).to_string();
+        let _ = progress_tx.send((i + 1, total, file_name));
+    }
+
+    zip.finish()
+        .map_err(|e| S3vError::Io(std::io::Error::other(e.to_string())))?;
+
     Ok(())
 }
 

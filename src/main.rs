@@ -454,8 +454,54 @@ fn handle_single_command<'a>(
                     dispatch_event(app, Event::MetadataIndexed(count));
                 }
             }
-            Command::StartZipDownload { .. } => {
-                // TODO: Task 4 で実装
+            Command::StartZipDownload {
+                bucket,
+                keys,
+                destination,
+                base_prefix,
+                zip_filename: _,
+            } => {
+                let client = s3_client.inner().clone();
+                let tx = stream_tx.clone();
+                tokio::spawn(async move {
+                    let (progress_tx, mut progress_rx) = tokio::sync::mpsc::unbounded_channel();
+
+                    let tx_clone = tx.clone();
+                    let progress_handle = tokio::spawn(async move {
+                        while let Some((completed, total, file_name)) = progress_rx.recv().await {
+                            let _ = tx_clone.send(Event::DownloadFileComplete {
+                                completed,
+                                total,
+                                current_file: file_name,
+                            });
+                        }
+                    });
+
+                    let result = s3v::download::zip_download::download_as_zip(
+                        &client,
+                        &bucket,
+                        &keys,
+                        &destination,
+                        &base_prefix,
+                        progress_tx,
+                    )
+                    .await;
+
+                    // Drop progress_tx (already moved into download_as_zip) so progress_handle finishes
+                    let _ = progress_handle.await;
+
+                    match result {
+                        Ok(()) => {
+                            let _ = tx.send(Event::DownloadAllComplete { count: keys.len() });
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Event::Error(s3v::error::user_error(
+                                "Zip download failed",
+                                e,
+                            )));
+                        }
+                    }
+                });
             }
             Command::ExecuteSearch(where_clause) => {
                 if let Some(index) = metadata_index.as_ref() {
