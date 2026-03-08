@@ -186,21 +186,28 @@ async fn run_app(
                             .await;
                     }
                     Command::LoadItems(path) => {
-                        let items = s3_client.list(&path).await.unwrap_or_else(|e| {
-                            eprintln!("Error loading items: {}", e);
-                            Vec::new()
-                        });
-                        dispatch_event(app, Event::ItemsLoaded(items));
+                        match s3_client.list(&path).await {
+                            Ok(items) => {
+                                dispatch_event(app, Event::ItemsLoaded(items));
 
-                        // バケットに入った時にメタデータインデックスを構築
-                        if let Some(bucket) = &app.current_path.bucket
-                            && !app.metadata_indexed
-                            && let Ok(all_items) = s3_client.list_all_objects(bucket).await
-                            && let Ok(index) = s3v::search::MetadataIndex::new()
-                            && let Ok(count) = index.insert_items(&all_items)
-                        {
-                            metadata_index = Some(index);
-                            dispatch_event(app, Event::MetadataIndexed(count));
+                                // バケットに入った時にメタデータインデックスを構築
+                                if let Some(bucket) = &app.current_path.bucket
+                                    && !app.metadata_indexed
+                                    && let Ok(all_items) =
+                                        s3_client.list_all_objects(bucket).await
+                                    && let Ok(index) = s3v::search::MetadataIndex::new()
+                                    && let Ok(count) = index.insert_items(&all_items)
+                                {
+                                    metadata_index = Some(index);
+                                    dispatch_event(app, Event::MetadataIndexed(count));
+                                }
+                            }
+                            Err(e) => {
+                                dispatch_event(
+                                    app,
+                                    Event::Error(format!("Failed to load items: {}", e)),
+                                );
+                            }
                         }
                     }
                     Command::IndexMetadata { bucket } => {
