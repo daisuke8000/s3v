@@ -10,7 +10,7 @@ pub fn page_count(pdf_bytes: &[u8]) -> Result<usize> {
     let doc = open_document(&tmp_path)?;
     let count = doc
         .page_count()
-        .map_err(|e| S3vError::Terminal(format!("PDF page count error: {}", e)))?;
+        .map_err(|e| S3vError::Pdf(format!("PDF page count error: {}", e)))?;
     let _ = std::fs::remove_file(&tmp_path);
     Ok(count as usize)
 }
@@ -23,14 +23,14 @@ pub fn render_page_to_image(pdf_bytes: &[u8], page: usize) -> Result<image::Dyna
 
     let pdf_page = doc
         .load_page(page as i32)
-        .map_err(|e| S3vError::Terminal(format!("PDF page load error: {}", e)))?;
+        .map_err(|e| S3vError::Pdf(format!("PDF page load error: {}", e)))?;
 
     // 150 DPI (72pt base * 2.08)
     let scale = 150.0 / 72.0;
     let matrix = mupdf::Matrix::new_scale(scale, scale);
     let pixmap = pdf_page
         .to_pixmap(&matrix, &mupdf::Colorspace::device_rgb(), false, true)
-        .map_err(|e| S3vError::Terminal(format!("PDF render error: {}", e)))?;
+        .map_err(|e| S3vError::Pdf(format!("PDF render error: {}", e)))?;
 
     let width = pixmap.width();
     let height = pixmap.height();
@@ -40,11 +40,11 @@ pub fn render_page_to_image(pdf_bytes: &[u8], page: usize) -> Result<image::Dyna
     if n == 4 {
         image::RgbaImage::from_raw(width, height, samples)
             .map(image::DynamicImage::ImageRgba8)
-            .ok_or_else(|| S3vError::Terminal("Failed to create image from PDF page".to_string()))
+            .ok_or_else(|| S3vError::Pdf("Failed to create image from PDF page".to_string()))
     } else {
         image::RgbImage::from_raw(width, height, samples)
             .map(image::DynamicImage::ImageRgb8)
-            .ok_or_else(|| S3vError::Terminal("Failed to create image from PDF page".to_string()))
+            .ok_or_else(|| S3vError::Pdf("Failed to create image from PDF page".to_string()))
     }
 }
 
@@ -60,7 +60,7 @@ fn write_temp_pdf(pdf_bytes: &[u8]) -> Result<std::path::PathBuf> {
 }
 
 fn open_document(path: &std::path::Path) -> Result<mupdf::Document> {
-    mupdf::Document::open(path).map_err(|e| S3vError::Terminal(format!("PDF open error: {}", e)))
+    mupdf::Document::open(path).map_err(|e| S3vError::Pdf(format!("PDF open error: {}", e)))
 }
 
 #[cfg(test)]

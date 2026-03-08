@@ -8,6 +8,12 @@ pub enum S3vError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
+    #[error("PDF error: {0}")]
+    Pdf(String),
+
+    #[error("Search error: {0}")]
+    Search(String),
+
     #[error("Terminal error: {0}")]
     Terminal(String),
 }

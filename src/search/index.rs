@@ -9,7 +9,7 @@ pub struct MetadataIndex {
 
 impl MetadataIndex {
     pub fn new() -> Result<Self> {
-        let conn = Connection::open_in_memory().map_err(|e| S3vError::Terminal(e.to_string()))?;
+        let conn = Connection::open_in_memory().map_err(|e| S3vError::Search(e.to_string()))?;
 
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS objects (
@@ -25,7 +25,7 @@ impl MetadataIndex {
             CREATE INDEX IF NOT EXISTS idx_modified ON objects(modified);
             CREATE INDEX IF NOT EXISTS idx_extension ON objects(extension);",
         )
-        .map_err(|e| S3vError::Terminal(e.to_string()))?;
+        .map_err(|e| S3vError::Search(e.to_string()))?;
 
         Ok(Self { conn })
     }
@@ -35,7 +35,7 @@ impl MetadataIndex {
         let tx = self
             .conn
             .unchecked_transaction()
-            .map_err(|e| S3vError::Terminal(e.to_string()))?;
+            .map_err(|e| S3vError::Search(e.to_string()))?;
 
         {
             let mut stmt = tx
@@ -43,7 +43,7 @@ impl MetadataIndex {
                     "INSERT OR REPLACE INTO objects (key, name, prefix, extension, size, modified, is_folder)
                      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 )
-                .map_err(|e| S3vError::Terminal(e.to_string()))?;
+                .map_err(|e| S3vError::Search(e.to_string()))?;
 
             for item in items {
                 match item {
@@ -64,7 +64,7 @@ impl MetadataIndex {
                             last_modified.as_deref(),
                             false
                         ])
-                        .map_err(|e| S3vError::Terminal(e.to_string()))?;
+                        .map_err(|e| S3vError::Search(e.to_string()))?;
                         count += 1;
                     }
                     S3Item::Folder { name, prefix } => {
@@ -77,7 +77,7 @@ impl MetadataIndex {
                             Option::<String>::None,
                             true
                         ])
-                        .map_err(|e| S3vError::Terminal(e.to_string()))?;
+                        .map_err(|e| S3vError::Search(e.to_string()))?;
                         count += 1;
                     }
                     _ => {}
@@ -85,14 +85,14 @@ impl MetadataIndex {
             }
         }
 
-        tx.commit().map_err(|e| S3vError::Terminal(e.to_string()))?;
+        tx.commit().map_err(|e| S3vError::Search(e.to_string()))?;
         Ok(count)
     }
 
     pub fn search(&self, where_clause: &str) -> Result<Vec<S3Item>> {
         // セミコロンを含むクエリを拒否（複数ステートメント防止）
         if where_clause.contains(';') {
-            return Err(S3vError::Terminal(
+            return Err(S3vError::Search(
                 "Invalid query: semicolons are not allowed".to_string(),
             ));
         }
@@ -105,7 +105,7 @@ impl MetadataIndex {
         let mut stmt = self
             .conn
             .prepare(&sql)
-            .map_err(|e| S3vError::Terminal(format!("SQL error: {}", e)))?;
+            .map_err(|e| S3vError::Search(format!("SQL error: {}", e)))?;
 
         let items = stmt
             .query_map([], |row| {
@@ -126,11 +126,11 @@ impl MetadataIndex {
                     })
                 }
             })
-            .map_err(|e| S3vError::Terminal(e.to_string()))?;
+            .map_err(|e| S3vError::Search(e.to_string()))?;
 
         let mut result = Vec::new();
         for item in items {
-            result.push(item.map_err(|e| S3vError::Terminal(e.to_string()))?);
+            result.push(item.map_err(|e| S3vError::Search(e.to_string()))?);
         }
         Ok(result)
     }
