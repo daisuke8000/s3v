@@ -92,6 +92,13 @@ fn build_breadcrumb(app: &App) -> Line<'static> {
         Style::default().fg(t.item_count_fg),
     ));
 
+    if !app.selected.is_empty() {
+        spans.push(Span::styled(
+            format!("  {} selected", app.selected.len()),
+            Style::default().fg(ratatui::style::Color::Green),
+        ));
+    }
+
     Line::from(spans)
 }
 
@@ -105,7 +112,16 @@ fn render_list(app: &App, frame: &mut Frame, area: Rect) {
         .map(|(i, item)| {
             let is_selected = i == app.cursor;
             let (icon, name, size, date) = format_item(item, is_selected);
+            let selected_marker = if app.selected.contains(&i) {
+                "+"
+            } else {
+                " "
+            };
             let line = Line::from(vec![
+                Span::styled(
+                    format!("{}", selected_marker),
+                    Style::default().fg(ratatui::style::Color::Green),
+                ),
                 Span::styled(
                     format!(" {} ", icon),
                     Style::default().fg(if item.is_folder() {
