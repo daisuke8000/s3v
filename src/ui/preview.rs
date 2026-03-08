@@ -50,9 +50,8 @@ pub fn render_preview(
         Some(PreviewContent::Pdf {
             current_page,
             total_pages,
-            ..
         }) => {
-            let title = format!(" PDF Preview [{}/{}] ", current_page + 1, total_pages);
+            let title = format!(" PDF [{}/{}] ", current_page + 1, total_pages);
             let block = block.title(Span::styled(
                 title,
                 Style::default()

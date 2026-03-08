@@ -86,14 +86,51 @@ async fn run_app(
     s3_client: &S3Client,
     picker: &mut Picker,
 ) -> anyhow::Result<()> {
-    let mut image_state: Option<StatefulProtocol> = None;
-    let mut pdf_raw_bytes: Option<Vec<u8>> = None;
-    let mut last_pdf_page: Option<usize> = None;
+    let mut preview = PreviewState {
+        image_state: None,
+        pdf_raw_bytes: None,
+        last_pdf_page: None,
+    };
     let mut metadata_index: Option<s3v::search::MetadataIndex> = None;
 
     loop {
+        // PDF ページ変更検知 → 再レンダリング
+        if let Some(s3v::preview::PreviewContent::Pdf {
+            current_page,
+            total_pages: _,
+        }) = &app.preview_content
+        {
+            let current = *current_page;
+            if preview.last_pdf_page != Some(current)
+                && let Some(ref raw) = preview.pdf_raw_bytes
+            {
+                let bytes_clone = raw.clone();
+                let page = current;
+                let result = tokio::task::spawn_blocking(move || {
+                    s3v::preview::pdf::render_page_to_image(&bytes_clone, page)
+                })
+                .await;
+                match result {
+                    Ok(Ok(dyn_img)) => {
+                        preview.image_state = Some(picker.new_resize_protocol(dyn_img));
+                    }
+                    Ok(Err(e)) => {
+                        let (new_app, _) = std::mem::take(app)
+                            .handle_event(Event::Error(format!("PDF render error: {}", e)));
+                        *app = new_app;
+                    }
+                    Err(e) => {
+                        let (new_app, _) = std::mem::take(app)
+                            .handle_event(Event::Error(format!("PDF task error: {}", e)));
+                        *app = new_app;
+                    }
+                }
+                preview.last_pdf_page = Some(current);
+            }
+        }
+
         // 描画
-        terminal.draw(|f| s3v::ui::render(app, f, image_state.as_mut()))?;
+        terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
 
         // イベント待機
         if event::poll(Duration::from_millis(100))?
@@ -111,25 +148,16 @@ async fn run_app(
             let (new_app, cmd) = std::mem::take(app).handle_event(event);
             *app = new_app;
 
-            // Preview モードを抜けたら image_state をクリア
+            // Preview モードを抜けたらプレビュー状態をクリア
             if app.mode != s3v::Mode::Preview {
-                image_state = None;
-                pdf_raw_bytes = None;
-                last_pdf_page = None;
+                preview.image_state = None;
+                preview.pdf_raw_bytes = None;
+                preview.last_pdf_page = None;
             }
 
-            // PDF ページ送り検知: current_page が変化したら再レンダリング
-            if let Some(s3v::preview::PreviewContent::Pdf { current_page, .. }) =
-                &app.preview_content
-                && last_pdf_page != Some(*current_page)
-            {
-                if let Some(ref pdf_bytes) = pdf_raw_bytes
-                    && let Ok(page_png) = s3v::preview::pdf::render_page(pdf_bytes, *current_page)
-                    && let Ok(dyn_img) = image::load_from_memory(&page_png)
-                {
-                    image_state = Some(picker.new_resize_protocol(dyn_img));
-                }
-                last_pdf_page = Some(*current_page);
+            // Loading 状態なら即座に再描画（ブロッキング処理前に表示更新）
+            if app.mode == s3v::Mode::Loading {
+                terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
             }
 
             // コマンド実行（副作用はここで処理）
@@ -155,22 +183,8 @@ async fn run_app(
                         }
                     }
                     Command::LoadPreview { bucket, key } => {
-                        handle_load_preview(
-                            app,
-                            s3_client,
-                            picker,
-                            &mut image_state,
-                            &mut pdf_raw_bytes,
-                            &bucket,
-                            &key,
-                        )
-                        .await;
-                        // PDF ページ追跡の初期化
-                        if let Some(s3v::preview::PreviewContent::Pdf { current_page, .. }) =
-                            &app.preview_content
-                        {
-                            last_pdf_page = Some(*current_page);
-                        }
+                        handle_load_preview(app, s3_client, picker, &mut preview, &bucket, &key)
+                            .await;
                     }
                     Command::LoadItems(path) => {
                         let items = s3_client.list(&path).await.unwrap_or_else(|e| {
@@ -237,12 +251,18 @@ async fn run_app(
     Ok(())
 }
 
+/// プレビュー描画用のランタイム状態（App に入れられない non-Clone 型を管理）
+struct PreviewState {
+    image_state: Option<StatefulProtocol>,
+    pdf_raw_bytes: Option<Vec<u8>>,
+    last_pdf_page: Option<usize>,
+}
+
 async fn handle_load_preview(
     app: &mut App,
     s3_client: &S3Client,
     picker: &mut Picker,
-    image_state: &mut Option<StatefulProtocol>,
-    pdf_raw_bytes: &mut Option<Vec<u8>>,
+    preview: &mut PreviewState,
     bucket: &str,
     key: &str,
 ) {
@@ -259,32 +279,37 @@ async fn handle_load_preview(
                 let raw_bytes = bytes.into_bytes();
 
                 if s3v::preview::pdf::is_pdf(key) {
-                    // PDF プレビュー
-                    match s3v::preview::pdf::page_count(&raw_bytes) {
-                        Ok(total) => match s3v::preview::pdf::render_page(&raw_bytes, 0) {
-                            Ok(first_page_png) => {
-                                if let Ok(dyn_img) = image::load_from_memory(&first_page_png) {
-                                    *image_state = Some(picker.new_resize_protocol(dyn_img));
-                                }
-                                *pdf_raw_bytes = Some(raw_bytes.to_vec());
-                                let (new_app, _) = std::mem::take(app).handle_event(
-                                    Event::PreviewLoaded(s3v::preview::PreviewContent::Pdf {
-                                        pages: vec![first_page_png],
-                                        current_page: 0,
-                                        total_pages: total,
-                                    }),
-                                );
-                                *app = new_app;
-                            }
-                            Err(e) => {
-                                let (new_app, _) =
-                                    std::mem::take(app).handle_event(Event::Error(e.to_string()));
-                                *app = new_app;
-                            }
-                        },
-                        Err(e) => {
+                    // PDF 画像レンダリングプレビュー（spawn_blocking でブロッキング回避）
+                    let pdf_bytes = raw_bytes.to_vec();
+                    let bytes_for_count = pdf_bytes.clone();
+                    let bytes_for_render = pdf_bytes.clone();
+                    let result = tokio::task::spawn_blocking(move || {
+                        let total = s3v::preview::pdf::page_count(&bytes_for_count)?;
+                        let img = s3v::preview::pdf::render_page_to_image(&bytes_for_render, 0)?;
+                        Ok::<(usize, image::DynamicImage), s3v::error::S3vError>((total, img))
+                    })
+                    .await;
+                    match result {
+                        Ok(Ok((total_pages, dyn_img))) => {
+                            preview.image_state = Some(picker.new_resize_protocol(dyn_img));
+                            preview.pdf_raw_bytes = Some(pdf_bytes);
+                            preview.last_pdf_page = Some(0);
+                            let (new_app, _) = std::mem::take(app).handle_event(
+                                Event::PreviewLoaded(s3v::preview::PreviewContent::Pdf {
+                                    current_page: 0,
+                                    total_pages,
+                                }),
+                            );
+                            *app = new_app;
+                        }
+                        Ok(Err(e)) => {
                             let (new_app, _) =
                                 std::mem::take(app).handle_event(Event::Error(e.to_string()));
+                            *app = new_app;
+                        }
+                        Err(e) => {
+                            let (new_app, _) = std::mem::take(app)
+                                .handle_event(Event::Error(format!("PDF task error: {}", e)));
                             *app = new_app;
                         }
                     }
@@ -292,7 +317,7 @@ async fn handle_load_preview(
                     // 画像プレビュー
                     match image::load_from_memory(&raw_bytes) {
                         Ok(dyn_img) => {
-                            *image_state = Some(picker.new_resize_protocol(dyn_img));
+                            preview.image_state = Some(picker.new_resize_protocol(dyn_img));
                             let (new_app, _) =
                                 std::mem::take(app).handle_event(Event::PreviewLoaded(
                                     s3v::preview::PreviewContent::Image(raw_bytes.to_vec()),

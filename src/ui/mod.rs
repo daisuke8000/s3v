@@ -30,7 +30,19 @@ pub fn render(app: &App, frame: &mut Frame, image_state: Option<&mut StatefulPro
     }
 
     if app.mode == Mode::Preview {
-        preview::render_preview(app, frame, frame.area(), image_state);
+        let layout = AppLayout::with_preview(frame.area());
+        if let AppLayout::WithPreview {
+            header,
+            list,
+            preview,
+            footer,
+        } = layout
+        {
+            render_header(app, frame, header);
+            render_list(app, frame, list);
+            preview::render_preview(app, frame, preview, image_state);
+            render_footer(app, frame, footer);
+        }
         return;
     }
 
@@ -206,12 +218,21 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
         app.current_path.to_s3_uri()
     };
 
-    let url_or_filter = match app.mode {
-        Mode::Filter => format!(" /{}", app.filter),
-        Mode::Search => format!(" SQL> {}", app.search_query),
-        _ => format!(" {}", url),
+    let url_or_filter = if let Some(ref err) = app.error_message {
+        format!(" Error: {}", err)
+    } else {
+        match app.mode {
+            Mode::Filter => format!(" /{}", app.filter),
+            Mode::Search => format!(" SQL> {}", app.search_query),
+            _ => format!(" {}", url),
+        }
     };
-    let url_bar = Paragraph::new(url_or_filter).style(Style::default().fg(t.url_fg));
+    let url_color = if app.error_message.is_some() {
+        ratatui::style::Color::Red
+    } else {
+        t.url_fg
+    };
+    let url_bar = Paragraph::new(url_or_filter).style(Style::default().fg(url_color));
     frame.render_widget(url_bar, chunks[0]);
 
     // ヘルプバー（モード別）

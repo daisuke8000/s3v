@@ -11,6 +11,13 @@ pub enum AppLayout {
         list: Rect,
         footer: Rect,
     },
+    /// プレビュー付き画面（リスト左 + プレビュー右）
+    WithPreview {
+        header: Rect,
+        list: Rect,
+        preview: Rect,
+        footer: Rect,
+    },
 }
 
 impl AppLayout {
@@ -34,6 +41,33 @@ impl AppLayout {
             header: chunks[0],
             list: chunks[1],
             footer: chunks[2],
+        }
+    }
+
+    /// プレビュー付き画面用レイアウト（リスト左 + プレビュー右）
+    pub fn with_preview(area: Rect) -> Self {
+        let vertical = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3), // Header
+                Constraint::Min(5),    // Content (list + preview)
+                Constraint::Length(4), // Footer
+            ])
+            .split(area);
+
+        let horizontal = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(50), // List
+                Constraint::Percentage(50), // Preview
+            ])
+            .split(vertical[1]);
+
+        Self::WithPreview {
+            header: vertical[0],
+            list: horizontal[0],
+            preview: horizontal[1],
+            footer: vertical[2],
         }
     }
 }

@@ -49,6 +49,8 @@ pub struct App {
     pub metadata_indexed: bool,
     /// インデックス済みオブジェクト数
     pub metadata_count: usize,
+    /// エラーメッセージ（UI に表示）
+    pub error_message: Option<String>,
 }
 
 impl Default for App {
@@ -74,6 +76,7 @@ impl App {
             search_query: String::new(),
             metadata_indexed: false,
             metadata_count: 0,
+            error_message: None,
         }
     }
 
@@ -108,16 +111,14 @@ impl App {
                 },
                 None,
             ),
-            Event::Error(msg) => {
-                eprintln!("Error: {}", msg);
-                (
-                    Self {
-                        mode: Mode::Normal,
-                        ..self
-                    },
-                    None,
-                )
-            }
+            Event::Error(msg) => (
+                Self {
+                    mode: Mode::Normal,
+                    error_message: Some(msg),
+                    ..self
+                },
+                None,
+            ),
             Event::Quit => (
                 Self {
                     running: false,
@@ -128,7 +129,10 @@ impl App {
         }
     }
 
-    fn handle_key(self, key: KeyEvent) -> (Self, Option<Command>) {
+    fn handle_key(mut self, key: KeyEvent) -> (Self, Option<Command>) {
+        // エラーメッセージをクリア
+        self.error_message = None;
+
         // バナー表示中は任意のキーでバナーを閉じる
         if self.show_banner {
             return (
@@ -214,20 +218,14 @@ impl App {
         if let Some(PreviewContent::Pdf {
             current_page,
             total_pages,
-            ..
         }) = &self.preview_content
             && current_page + 1 < *total_pages
         {
-            let mut content = self.preview_content.clone();
-            if let Some(PreviewContent::Pdf {
-                current_page: ref mut cp,
-                ..
-            }) = content
-            {
-                *cp += 1;
-            }
             return Self {
-                preview_content: content,
+                preview_content: Some(PreviewContent::Pdf {
+                    current_page: current_page + 1,
+                    total_pages: *total_pages,
+                }),
                 ..self
             };
         }
@@ -235,19 +233,17 @@ impl App {
     }
 
     fn prev_pdf_page(self) -> Self {
-        if let Some(PreviewContent::Pdf { current_page, .. }) = &self.preview_content
+        if let Some(PreviewContent::Pdf {
+            current_page,
+            total_pages,
+        }) = &self.preview_content
             && *current_page > 0
         {
-            let mut content = self.preview_content.clone();
-            if let Some(PreviewContent::Pdf {
-                current_page: ref mut cp,
-                ..
-            }) = content
-            {
-                *cp -= 1;
-            }
             return Self {
-                preview_content: content,
+                preview_content: Some(PreviewContent::Pdf {
+                    current_page: current_page - 1,
+                    total_pages: *total_pages,
+                }),
                 ..self
             };
         }
