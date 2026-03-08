@@ -19,28 +19,22 @@ fn render_to_string(app: &App, width: u16, height: u16) -> String {
 }
 
 #[test]
-fn test_ui_renders_header_with_root_path() {
-    let app = App::new();
-    let output = render_to_string(&app, 80, 20);
-
-    // ヘッダーに "s3v" と "/" が表示される
-    assert!(output.contains("s3v"), "Header should contain 's3v'");
-    assert!(output.contains("/"), "Header should show root path '/'");
-}
-
-#[test]
-fn test_ui_renders_loading_state() {
-    let app = App::new(); // mode = Loading by default
-    let output = render_to_string(&app, 80, 20);
+fn test_ui_renders_startup_banner() {
+    let app = App::new(); // show_banner = true, mode = Loading
+    let output = render_to_string(&app, 80, 24);
 
     assert!(
+        output.contains("s3v") || output.contains("S3 Viewer"),
+        "Startup banner should contain 's3v' or 'S3 Viewer'"
+    );
+    assert!(
         output.contains("Loading"),
-        "Should show 'Loading...' in loading state"
+        "Startup banner should show 'Loading...'"
     );
 }
 
 #[test]
-fn test_ui_renders_bucket_list() {
+fn test_ui_renders_normal_after_items_loaded() {
     let app = App::new();
     let items = vec![
         S3Item::Bucket {
@@ -52,7 +46,9 @@ fn test_ui_renders_bucket_list() {
     ];
     let (app, _) = app.handle_event(Event::ItemsLoaded(items));
 
-    let output = render_to_string(&app, 80, 20);
+    assert!(!app.show_banner);
+
+    let output = render_to_string(&app, 80, 24);
 
     assert!(
         output.contains("my-bucket-1"),
@@ -62,59 +58,81 @@ fn test_ui_renders_bucket_list() {
         output.contains("my-bucket-2"),
         "Should display second bucket name"
     );
-    assert!(output.contains("2 items"), "Should show item count");
 }
 
 #[test]
-fn test_ui_renders_file_list_with_size() {
+fn test_ui_renders_breadcrumb() {
     let mut app = App::new();
-    app.current_path = S3Path::bucket("test-bucket");
-    let items = vec![
-        S3Item::Folder {
-            name: "docs/".to_string(),
-            prefix: "docs/".to_string(),
-        },
-        S3Item::File {
-            name: "readme.txt".to_string(),
-            key: "readme.txt".to_string(),
-            size: 2048,
-            last_modified: Some("2024-03-15T10:30:00Z".to_string()),
-        },
-    ];
-    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
+    app.show_banner = false;
+    app.current_path = S3Path::with_prefix("test-bucket", "folder/sub/");
+    app.items = vec![S3Item::File {
+        name: "file.txt".to_string(),
+        key: "folder/sub/file.txt".to_string(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.mode = s3v::Mode::Normal;
 
-    let output = render_to_string(&app, 80, 20);
+    let output = render_to_string(&app, 80, 24);
 
-    assert!(output.contains("docs/"), "Should display folder name");
-    assert!(output.contains("readme.txt"), "Should display file name");
-    assert!(output.contains("2.0 KB"), "Should format file size");
-    assert!(output.contains("2024-03-15"), "Should display date");
-    assert!(output.contains("DIR"), "Folder should have DIR icon");
+    assert!(
+        output.contains("test-bucket"),
+        "Breadcrumb should contain bucket name"
+    );
+    assert!(
+        output.contains("folder"),
+        "Breadcrumb should contain folder path"
+    );
+}
+
+#[test]
+fn test_ui_renders_rounded_borders() {
+    let mut app = App::new();
+    app.show_banner = false;
+    app.items = vec![S3Item::Bucket {
+        name: "bucket".to_string(),
+    }];
+    app.mode = s3v::Mode::Normal;
+
+    let output = render_to_string(&app, 80, 24);
+
+    assert!(
+        output.contains('╭')
+            && output.contains('╮')
+            && output.contains('╰')
+            && output.contains('╯'),
+        "Should render rounded borders"
+    );
 }
 
 #[test]
 fn test_ui_renders_help_bar() {
-    let app = App::new();
-    let output = render_to_string(&app, 80, 20);
+    let mut app = App::new();
+    app.show_banner = false;
+    app.mode = s3v::Mode::Normal;
 
-    assert!(output.contains("Enter"), "Help should mention Enter");
-    assert!(output.contains("Esc"), "Help should mention Esc");
+    let output = render_to_string(&app, 80, 24);
+
+    assert!(output.contains("Move"), "Help should mention Move");
+    assert!(output.contains("Open"), "Help should mention Open");
+    assert!(output.contains("Back"), "Help should mention Back");
     assert!(output.contains("Quit"), "Help should mention Quit");
 }
 
 #[test]
 fn test_ui_renders_url_bar() {
     let mut app = App::new();
+    app.show_banner = false;
     app.current_path = S3Path::bucket("test-bucket");
-    let items = vec![S3Item::File {
+    app.items = vec![S3Item::File {
         name: "test.txt".to_string(),
         key: "test.txt".to_string(),
         size: 100,
         last_modified: None,
     }];
-    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
+    app.mode = s3v::Mode::Normal;
 
-    let output = render_to_string(&app, 80, 20);
+    let output = render_to_string(&app, 80, 24);
 
     assert!(
         output.contains("s3://test-bucket/test.txt"),

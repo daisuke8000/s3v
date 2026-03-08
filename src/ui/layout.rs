@@ -26,7 +26,7 @@ impl AppLayout {
             .constraints([
                 Constraint::Length(3), // Header (border + breadcrumb)
                 Constraint::Min(5),    // List (with border)
-                Constraint::Length(3), // Footer (URL + help)
+                Constraint::Length(4), // Footer (URL + help with border)
             ])
             .split(area);
 
