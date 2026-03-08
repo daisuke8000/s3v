@@ -13,6 +13,13 @@ use ratatui_image::protocol::StatefulProtocol;
 
 use s3v::{App, Cli, Command, Event, S3Client};
 
+/// App にイベントを送信し、状態を更新するヘルパー
+fn dispatch_event(app: &mut App, event: Event) -> Option<Command> {
+    let (new_app, cmd) = std::mem::take(app).handle_event(event);
+    *app = new_app;
+    cmd
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -66,8 +73,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 初期ロード
     let initial_items = s3_client.list(&initial_path).await.unwrap_or_default();
-    let (new_app, _) = app.handle_event(Event::ItemsLoaded(initial_items));
-    app = new_app;
+    dispatch_event(&mut app, Event::ItemsLoaded(initial_items));
 
     // メインループ
     let result = run_app(&mut terminal, &mut app, &s3_client, &mut picker).await;
@@ -115,14 +121,10 @@ async fn run_app(
                         preview.image_state = Some(picker.new_resize_protocol(dyn_img));
                     }
                     Ok(Err(e)) => {
-                        let (new_app, _) = std::mem::take(app)
-                            .handle_event(Event::Error(format!("PDF render error: {}", e)));
-                        *app = new_app;
+                        dispatch_event(app, Event::Error(format!("PDF render error: {}", e)));
                     }
                     Err(e) => {
-                        let (new_app, _) = std::mem::take(app)
-                            .handle_event(Event::Error(format!("PDF task error: {}", e)));
-                        *app = new_app;
+                        dispatch_event(app, Event::Error(format!("PDF task error: {}", e)));
                     }
                 }
                 preview.last_pdf_page = Some(current);
@@ -145,8 +147,7 @@ async fn run_app(
                 s3v::Mode::Filter | s3v::Mode::Preview | s3v::Mode::Search => Event::Key(key),
                 _ => Event::from_key(key),
             };
-            let (new_app, cmd) = std::mem::take(app).handle_event(event);
-            *app = new_app;
+            let cmd = dispatch_event(app, event);
 
             // Preview モードを抜けたらプレビュー状態をクリア
             if app.mode != s3v::Mode::Preview {
@@ -177,9 +178,7 @@ async fn run_app(
                         )
                         .await
                         {
-                            let (new_app, _) = std::mem::take(app)
-                                .handle_event(Event::Error(format!("Download error: {}", e)));
-                            *app = new_app;
+                            dispatch_event(app, Event::Error(format!("Download error: {}", e)));
                         }
                     }
                     Command::LoadPreview { bucket, key } => {
@@ -191,9 +190,7 @@ async fn run_app(
                             eprintln!("Error loading items: {}", e);
                             Vec::new()
                         });
-                        let (new_app, _) =
-                            std::mem::take(app).handle_event(Event::ItemsLoaded(items));
-                        *app = new_app;
+                        dispatch_event(app, Event::ItemsLoaded(items));
 
                         // バケットに入った時にメタデータインデックスを構築
                         if let Some(bucket) = &app.current_path.bucket
@@ -203,9 +200,7 @@ async fn run_app(
                             && let Ok(count) = index.insert_items(&all_items)
                         {
                             metadata_index = Some(index);
-                            let (new_app, _) =
-                                std::mem::take(app).handle_event(Event::MetadataIndexed(count));
-                            *app = new_app;
+                            dispatch_event(app, Event::MetadataIndexed(count));
                         }
                     }
                     Command::IndexMetadata { bucket } => {
@@ -214,29 +209,27 @@ async fn run_app(
                             && let Ok(count) = index.insert_items(&all_items)
                         {
                             metadata_index = Some(index);
-                            let (new_app, _) =
-                                std::mem::take(app).handle_event(Event::MetadataIndexed(count));
-                            *app = new_app;
+                            dispatch_event(app, Event::MetadataIndexed(count));
                         }
                     }
                     Command::ExecuteSearch(where_clause) => {
                         if let Some(ref index) = metadata_index {
                             match index.search(&where_clause) {
                                 Ok(results) => {
-                                    let (new_app, _) = std::mem::take(app)
-                                        .handle_event(Event::SearchResults(results));
-                                    *app = new_app;
+                                    dispatch_event(app, Event::SearchResults(results));
                                 }
                                 Err(e) => {
-                                    let (new_app, _) = std::mem::take(app)
-                                        .handle_event(Event::Error(format!("Search error: {}", e)));
-                                    *app = new_app;
+                                    dispatch_event(
+                                        app,
+                                        Event::Error(format!("Search error: {}", e)),
+                                    );
                                 }
                             }
                         } else {
-                            let (new_app, _) = std::mem::take(app)
-                                .handle_event(Event::Error("Metadata not indexed yet".to_string()));
-                            *app = new_app;
+                            dispatch_event(
+                                app,
+                                Event::Error("Metadata not indexed yet".to_string()),
+                            );
                         }
                     }
                 }
@@ -294,23 +287,22 @@ async fn handle_load_preview(
                             preview.image_state = Some(picker.new_resize_protocol(dyn_img));
                             preview.pdf_raw_bytes = Some(pdf_bytes);
                             preview.last_pdf_page = Some(0);
-                            let (new_app, _) = std::mem::take(app).handle_event(
+                            dispatch_event(
+                                app,
                                 Event::PreviewLoaded(s3v::preview::PreviewContent::Pdf {
                                     current_page: 0,
                                     total_pages,
                                 }),
                             );
-                            *app = new_app;
                         }
                         Ok(Err(e)) => {
-                            let (new_app, _) =
-                                std::mem::take(app).handle_event(Event::Error(e.to_string()));
-                            *app = new_app;
+                            dispatch_event(app, Event::Error(e.to_string()));
                         }
                         Err(e) => {
-                            let (new_app, _) = std::mem::take(app)
-                                .handle_event(Event::Error(format!("PDF task error: {}", e)));
-                            *app = new_app;
+                            dispatch_event(
+                                app,
+                                Event::Error(format!("PDF task error: {}", e)),
+                            );
                         }
                     }
                 } else if s3v::preview::image::is_image(key) {
@@ -318,36 +310,36 @@ async fn handle_load_preview(
                     match image::load_from_memory(&raw_bytes) {
                         Ok(dyn_img) => {
                             preview.image_state = Some(picker.new_resize_protocol(dyn_img));
-                            let (new_app, _) =
-                                std::mem::take(app).handle_event(Event::PreviewLoaded(
-                                    s3v::preview::PreviewContent::Image(raw_bytes.to_vec()),
-                                ));
-                            *app = new_app;
+                            dispatch_event(
+                                app,
+                                Event::PreviewLoaded(s3v::preview::PreviewContent::Image(
+                                    raw_bytes.to_vec(),
+                                )),
+                            );
                         }
                         Err(e) => {
-                            let (new_app, _) = std::mem::take(app)
-                                .handle_event(Event::Error(format!("Image decode error: {}", e)));
-                            *app = new_app;
+                            dispatch_event(
+                                app,
+                                Event::Error(format!("Image decode error: {}", e)),
+                            );
                         }
                     }
                 } else {
                     // テキストプレビュー
                     let raw = String::from_utf8_lossy(&raw_bytes).to_string();
                     let formatted = s3v::preview::text::format_preview(&raw, key);
-                    let (new_app, _) = std::mem::take(app).handle_event(Event::PreviewLoaded(
-                        s3v::preview::PreviewContent::Text(formatted),
-                    ));
-                    *app = new_app;
+                    dispatch_event(
+                        app,
+                        Event::PreviewLoaded(s3v::preview::PreviewContent::Text(formatted)),
+                    );
                 }
             }
             Err(e) => {
-                let (new_app, _) = std::mem::take(app).handle_event(Event::Error(e.to_string()));
-                *app = new_app;
+                dispatch_event(app, Event::Error(e.to_string()));
             }
         },
         Err(e) => {
-            let (new_app, _) = std::mem::take(app).handle_event(Event::Error(e.to_string()));
-            *app = new_app;
+            dispatch_event(app, Event::Error(e.to_string()));
         }
     }
 }
