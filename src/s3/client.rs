@@ -75,30 +75,8 @@ impl S3Client {
 
         // Objects (files)
         for obj in resp.contents() {
-            if let Some(key) = obj.key() {
-                // Skip the prefix itself if it appears as an object
-                if key == path.prefix {
-                    continue;
-                }
-
-                let name = key.strip_prefix(&path.prefix).unwrap_or(key).to_string();
-
-                // Skip folder markers
-                if name.is_empty() || name.ends_with('/') {
-                    continue;
-                }
-
-                let last_modified = obj.last_modified().map(|dt| {
-                    dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
-                        .unwrap_or_default()
-                });
-
-                items.push(S3Item::File {
-                    name,
-                    key: key.to_string(),
-                    size: obj.size().unwrap_or(0) as u64,
-                    last_modified,
-                });
+            if let Some(item) = object_to_item(obj, &path.prefix) {
+                items.push(item);
             }
         }
 
@@ -145,21 +123,8 @@ impl S3Client {
             }
 
             for obj in resp.contents() {
-                if let Some(key) = obj.key() {
-                    if key.ends_with('/') {
-                        continue;
-                    }
-                    let name = key.split('/').next_back().unwrap_or(key).to_string();
-                    let last_modified = obj.last_modified().map(|dt| {
-                        dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
-                            .unwrap_or_default()
-                    });
-                    all_items.push(S3Item::File {
-                        name,
-                        key: key.to_string(),
-                        size: obj.size().unwrap_or(0) as u64,
-                        last_modified,
-                    });
+                if let Some(item) = object_to_item(obj, "") {
+                    all_items.push(item);
                 }
             }
 
@@ -172,4 +137,39 @@ impl S3Client {
 
         Ok(all_items)
     }
+}
+
+/// S3 Object を S3Item::File に変換するヘルパー
+/// strip_prefix: 名前からストリップするプレフィックス（list_objects 用）。空文字なら最後のセグメントを使用。
+fn object_to_item(obj: &aws_sdk_s3::types::Object, strip_prefix: &str) -> Option<S3Item> {
+    let key = obj.key()?;
+
+    // フォルダマーカーやプレフィックス自体をスキップ
+    if key == strip_prefix || key.ends_with('/') {
+        return None;
+    }
+
+    let name = if strip_prefix.is_empty() {
+        // list_all_objects: 最後のセグメントを使用
+        key.split('/').next_back().unwrap_or(key).to_string()
+    } else {
+        // list_objects: プレフィックスを除去
+        let stripped = key.strip_prefix(strip_prefix).unwrap_or(key).to_string();
+        if stripped.is_empty() {
+            return None;
+        }
+        stripped
+    };
+
+    let last_modified = obj.last_modified().map(|dt| {
+        dt.fmt(aws_sdk_s3::primitives::DateTimeFormat::DateTime)
+            .unwrap_or_default()
+    });
+
+    Some(S3Item::File {
+        name,
+        key: key.to_string(),
+        size: obj.size().unwrap_or(0) as u64,
+        last_modified,
+    })
 }
