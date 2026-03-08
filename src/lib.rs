@@ -10,7 +10,7 @@ pub mod s3;
 pub mod search;
 pub mod ui;
 
-pub use app::{App, Mode};
+pub use app::{App, BannerState, Mode};
 pub use cli::Cli;
 pub use command::Command;
 pub use error::{Result, S3vError};
