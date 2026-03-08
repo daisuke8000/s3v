@@ -11,6 +11,7 @@ use ratatui_image::protocol::StatefulProtocol;
 use crate::app::App;
 use crate::preview::PreviewContent;
 
+use super::format::format_size;
 use super::theme::theme;
 
 pub fn render_preview(
@@ -83,14 +84,14 @@ pub fn render_preview(
                     let r = *received as f64 / *total as f64;
                     let label = format!(
                         "{} / {} ({:.0}%)",
-                        format_bytes(*received),
-                        format_bytes(*total),
+                        format_size(*received),
+                        format_size(*total),
                         r * 100.0,
                     );
                     (r, label)
                 }
                 _ => {
-                    let label = format!("{} downloaded", format_bytes(*received));
+                    let label = format!("{} downloaded", format_size(*received));
                     (0.0, label)
                 }
             };
@@ -106,17 +107,5 @@ pub fn render_preview(
             frame.render_widget(gauge, gauge_area);
         }
         None => {}
-    }
-}
-
-fn format_bytes(bytes: u64) -> String {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    if bytes >= MB {
-        format!("{:.1} MB", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.1} KB", bytes as f64 / KB as f64)
-    } else {
-        format!("{} B", bytes)
     }
 }

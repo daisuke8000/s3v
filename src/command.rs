@@ -21,4 +21,18 @@ pub enum Command {
     ExecuteSearch(String),
     /// アプリケーション終了
     Quit,
+    /// 親ペインのアイテム一覧を取得
+    LoadParentItems(S3Path),
+    /// フォルダプレビュー（右ペインにフォルダ内容を表示）
+    LoadFolderPreview { bucket: String, prefix: String },
+    /// デバウンス付きプレビュー要求（main.rs がタイマー管理）
+    RequestPreview {
+        bucket: String,
+        key: String,
+        debounce_key: String,
+    },
+    /// プリフェッチ要求（隣接アイテムの先読み、低優先度）
+    PrefetchPreview { bucket: String, key: String },
+    /// 現在のプレビュー読み込みをキャンセル
+    CancelPreview,
 }

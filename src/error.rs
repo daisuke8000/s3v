@@ -19,3 +19,8 @@ pub enum S3vError {
 }
 
 pub type Result<T> = std::result::Result<T, S3vError>;
+
+/// ユーザー向けエラーメッセージのフォーマット
+pub fn user_error(category: &str, err: impl std::fmt::Display) -> String {
+    format!("{}: {}", category, err)
+}

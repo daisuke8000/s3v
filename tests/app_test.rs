@@ -35,16 +35,16 @@ fn test_app_items_loaded() {
         },
     ];
 
-    let (app, cmd) = app.handle_event(Event::ItemsLoaded(items));
+    let (app, cmds) = app.handle_event(Event::ItemsLoaded(items));
     assert_eq!(app.items.len(), 2);
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Normal);
     assert_eq!(
         app.banner_state,
-        s3v::BannerState::Splash,
-        "Banner should remain Splash after items loaded"
+        s3v::BannerState::Active,
+        "Banner should transition to Active after items loaded"
     );
-    assert!(cmd.is_none());
+    assert!(cmds.is_empty());
 }
 
 #[test]
@@ -57,14 +57,14 @@ fn test_app_banner_dismissed_by_keypress() {
     );
 
     // 任意のキーでバナーを閉じる
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
     assert_eq!(
         app.banner_state,
         s3v::BannerState::Active,
         "Banner should transition to Active after keypress"
     );
     assert!(
-        cmd.is_none(),
+        cmds.is_empty(),
         "Dismissing banner should not produce a command"
     );
 }
@@ -116,17 +116,15 @@ fn test_app_enter_bucket() {
     }];
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
 
     assert_eq!(app.current_path.bucket, Some("my-bucket".to_string()));
     assert_eq!(app.mode, Mode::Loading);
 
-    match cmd {
-        Some(Command::LoadItems(path)) => {
-            assert_eq!(path.bucket, Some("my-bucket".to_string()));
-        }
-        _ => panic!("Expected LoadItems command"),
-    }
+    assert!(
+        cmds.iter().any(|cmd| matches!(cmd, Command::LoadItems(path) if path.bucket == Some("my-bucket".to_string()))),
+        "Expected LoadItems command for my-bucket"
+    );
 }
 
 #[test]
@@ -139,17 +137,16 @@ fn test_app_enter_folder() {
     }];
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
 
     assert_eq!(app.current_path.prefix, "folder/");
     assert_eq!(app.mode, Mode::Loading);
 
-    match cmd {
-        Some(Command::LoadItems(path)) => {
-            assert_eq!(path.prefix, "folder/");
-        }
-        _ => panic!("Expected LoadItems command"),
-    }
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::LoadItems(path) if path.prefix == "folder/")),
+        "Expected LoadItems command for folder/"
+    );
 }
 
 #[test]
@@ -158,17 +155,16 @@ fn test_app_go_back() {
     app.current_path = S3Path::with_prefix("my-bucket", "folder/subfolder/");
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
 
     assert_eq!(app.current_path.prefix, "folder/");
     assert_eq!(app.mode, Mode::Loading);
 
-    match cmd {
-        Some(Command::LoadItems(path)) => {
-            assert_eq!(path.prefix, "folder/");
-        }
-        _ => panic!("Expected LoadItems command"),
-    }
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::LoadItems(path) if path.prefix == "folder/")),
+        "Expected LoadItems command for folder/"
+    );
 }
 
 #[test]
@@ -177,25 +173,24 @@ fn test_app_go_back_to_root() {
     app.current_path = S3Path::bucket("my-bucket");
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
 
     assert!(app.current_path.is_root());
 
-    match cmd {
-        Some(Command::LoadItems(path)) => {
-            assert!(path.is_root());
-        }
-        _ => panic!("Expected LoadItems command"),
-    }
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::LoadItems(path) if path.is_root())),
+        "Expected LoadItems command for root"
+    );
 }
 
 #[test]
 fn test_app_quit() {
     let app = App::new();
-    let (app, cmd) = app.handle_event(Event::Quit);
+    let (app, cmds) = app.handle_event(Event::Quit);
 
     assert!(!app.running);
-    assert!(matches!(cmd, Some(Command::Quit)));
+    assert!(cmds.iter().any(|cmd| matches!(cmd, Command::Quit)));
 }
 
 #[test]
@@ -258,10 +253,10 @@ fn test_h_goes_back() {
     app.current_path = S3Path::with_prefix("my-bucket", "folder/");
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Char('h'))));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('h'))));
     assert_eq!(app.current_path.bucket, Some("my-bucket".to_string()));
     assert_eq!(app.current_path.prefix, "");
-    assert!(matches!(cmd, Some(Command::LoadItems(_))));
+    assert!(cmds.iter().any(|cmd| matches!(cmd, Command::LoadItems(_))));
 }
 
 #[test]
@@ -272,9 +267,9 @@ fn test_l_enters_item() {
     }];
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Char('l'))));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('l'))));
     assert_eq!(app.current_path.bucket, Some("my-bucket".to_string()));
-    assert!(matches!(cmd, Some(Command::LoadItems(_))));
+    assert!(cmds.iter().any(|cmd| matches!(cmd, Command::LoadItems(_))));
 }
 
 #[test]
@@ -361,15 +356,18 @@ fn test_preview_mode_entry_for_text_file() {
     }];
     app.mode = Mode::Normal;
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
     assert_eq!(app.mode, Mode::Loading);
-    assert!(matches!(cmd, Some(Command::LoadPreview { .. })));
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::LoadPreview { .. }))
+    );
 }
 
 #[test]
 fn test_preview_scroll() {
     let mut app = app_without_banner();
-    app.mode = Mode::Preview;
+    app.mode = Mode::PreviewFocus;
     app.preview_content = Some(s3v::preview::PreviewContent::Text(
         "line1\nline2\nline3".into(),
     ));
@@ -385,12 +383,11 @@ fn test_preview_scroll() {
 #[test]
 fn test_preview_close() {
     let mut app = app_without_banner();
-    app.mode = Mode::Preview;
+    app.mode = Mode::PreviewFocus;
     app.preview_content = Some(s3v::preview::PreviewContent::Text("content".into()));
 
     let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Esc)));
     assert_eq!(app.mode, Mode::Normal);
-    assert!(app.preview_content.is_none());
 }
 
 #[test]
@@ -435,9 +432,12 @@ fn test_search_mode_execute() {
     app.mode = Mode::Search;
     app.search_query = "name LIKE '%test%'".to_string();
 
-    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
     assert_eq!(app.mode, Mode::Loading);
-    assert!(matches!(cmd, Some(Command::ExecuteSearch(_))));
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::ExecuteSearch(_)))
+    );
 }
 
 #[test]
@@ -480,7 +480,7 @@ fn test_search_rejects_multiple_statements() {
 #[test]
 fn test_preview_chunk_appends_text() {
     let mut app = app_without_banner();
-    app.mode = Mode::Preview;
+    app.mode = Mode::PreviewFocus;
     app.preview_content = Some(s3v::preview::PreviewContent::StreamingText {
         partial_text: "hello".into(),
         key: "test.txt".into(),
@@ -498,7 +498,7 @@ fn test_preview_chunk_appends_text() {
 #[test]
 fn test_preview_stream_complete() {
     let mut app = app_without_banner();
-    app.mode = Mode::Preview;
+    app.mode = Mode::PreviewFocus;
     app.preview_content = Some(s3v::preview::PreviewContent::StreamingText {
         partial_text: "raw text".into(),
         key: "test.txt".into(),
@@ -517,6 +517,7 @@ fn test_preview_stream_complete() {
 #[test]
 fn test_preview_progress() {
     let mut app = app_without_banner();
+    app.mode = Mode::Normal;
     let (app, _) = app.handle_event(Event::PreviewProgress {
         received: 1024,
         total: Some(4096),
@@ -528,12 +529,13 @@ fn test_preview_progress() {
         }
         _ => panic!("Expected Downloading"),
     }
-    assert_eq!(app.mode, Mode::Preview);
+    assert_eq!(app.mode, Mode::Normal);
 }
 
 #[test]
 fn test_preview_image_ready() {
     let mut app = app_without_banner();
+    app.mode = Mode::Normal;
     app.preview_content = Some(s3v::preview::PreviewContent::Downloading {
         received: 4096,
         total: Some(4096),
@@ -544,7 +546,7 @@ fn test_preview_image_ready() {
         app.preview_content,
         Some(s3v::preview::PreviewContent::Image)
     ));
-    assert_eq!(app.mode, Mode::Preview);
+    assert_eq!(app.mode, Mode::Normal);
 }
 
 #[test]
@@ -591,4 +593,93 @@ fn test_search_valid_where_clause() {
     index.insert_items(&items).unwrap();
     let result = index.search("name LIKE '%test%'").unwrap();
     assert_eq!(result.len(), 1);
+}
+
+#[test]
+fn test_auto_preview_on_cursor_move() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.txt".into(),
+            key: "b.txt".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+
+    // カーソル下移動 → 自動プレビューコマンドが生成される
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Down)));
+    assert_eq!(app.cursor, 1);
+    // RequestPreview が含まれることを確認
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::RequestPreview { .. })),
+        "Expected RequestPreview command on cursor move"
+    );
+}
+
+#[test]
+fn test_parent_items_loaded() {
+    let app = app_without_banner();
+    let parent_items = vec![
+        S3Item::Folder {
+            name: "folder-a/".into(),
+            prefix: "folder-a/".into(),
+        },
+        S3Item::Folder {
+            name: "folder-b/".into(),
+            prefix: "folder-b/".into(),
+        },
+    ];
+
+    let (app, _) = app.handle_event(Event::ParentItemsLoaded(parent_items));
+    assert_eq!(app.parent_items.len(), 2);
+}
+
+#[test]
+fn test_folder_preview_loaded() {
+    let app = app_without_banner();
+    let folder_items = vec![S3Item::File {
+        name: "child.txt".into(),
+        key: "folder/child.txt".into(),
+        size: 50,
+        last_modified: None,
+    }];
+
+    let (app, _) = app.handle_event(Event::FolderPreviewLoaded(folder_items));
+    assert_eq!(app.folder_preview_items.len(), 1);
+}
+
+#[test]
+fn test_prefetch_complete_caches() {
+    let app = app_without_banner();
+
+    let (app, _) = app.handle_event(Event::PrefetchComplete {
+        key: "test.txt".into(),
+        content: "cached content".into(),
+    });
+    assert_eq!(app.preview_cache.get("test.txt").unwrap(), "cached content");
+}
+
+#[test]
+fn test_tab_toggles_preview_focus() {
+    let mut app = app_without_banner();
+    app.mode = Mode::Normal;
+    app.preview_content = Some(s3v::preview::PreviewContent::Text("content".into()));
+
+    // Tab → PreviewFocus
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Tab)));
+    assert_eq!(app.mode, Mode::PreviewFocus);
+
+    // Tab → back to Normal
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Tab)));
+    assert_eq!(app.mode, Mode::Normal);
 }

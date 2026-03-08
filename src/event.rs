@@ -26,6 +26,14 @@ pub enum Event {
     PreviewImageReady,
     /// PDF データダウンロード完了（メインループで PdfWorker セットアップ）
     PdfDataReady,
+    /// 親ペインのアイテム一覧読み込み完了
+    ParentItemsLoaded(Vec<S3Item>),
+    /// フォルダプレビューの読み込み完了
+    FolderPreviewLoaded(Vec<S3Item>),
+    /// デバウンスタイマー満了
+    DebounceTimeout { debounce_key: String },
+    /// プリフェッチ完了（キャッシュに格納）
+    PrefetchComplete { key: String, content: String },
     /// エラー発生
     Error(String),
     /// 終了要求

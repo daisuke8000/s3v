@@ -102,16 +102,19 @@ async fn test_full_navigation_flow() {
         ..app
     };
 
-    let (app, cmd) = app.handle_event(Event::Key(crossterm::event::KeyEvent::new(
+    let (app, cmds) = app.handle_event(Event::Key(crossterm::event::KeyEvent::new(
         crossterm::event::KeyCode::Enter,
         crossterm::event::KeyModifiers::empty(),
     )));
 
     assert_eq!(app.mode, Mode::Loading);
-    let load_path = match cmd {
-        Some(Command::LoadItems(path)) => path,
-        _ => panic!("Expected LoadItems command"),
-    };
+    let load_path = cmds
+        .iter()
+        .find_map(|cmd| match cmd {
+            Command::LoadItems(path) => Some(path.clone()),
+            _ => None,
+        })
+        .expect("Expected LoadItems command");
 
     // 3. Load bucket contents
     let items = client.list(&load_path).await.unwrap();
@@ -120,10 +123,10 @@ async fn test_full_navigation_flow() {
     assert!(app.items.iter().any(|item| item.name() == "folder/"));
 
     // 4. Go back to root
-    let (app, cmd) = app.handle_event(Event::Key(crossterm::event::KeyEvent::new(
+    let (app, cmds) = app.handle_event(Event::Key(crossterm::event::KeyEvent::new(
         crossterm::event::KeyCode::Esc,
         crossterm::event::KeyModifiers::empty(),
     )));
     assert!(app.current_path.is_root());
-    assert!(matches!(cmd, Some(Command::LoadItems(_))));
+    assert!(cmds.iter().any(|cmd| matches!(cmd, Command::LoadItems(_))));
 }

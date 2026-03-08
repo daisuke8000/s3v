@@ -3,6 +3,7 @@ use aws_sdk_s3::Client;
 use crate::error::{Result, S3vError};
 use crate::s3::{S3Item, S3Path};
 
+#[derive(Clone)]
 pub struct S3Client {
     client: Client,
     region: String,

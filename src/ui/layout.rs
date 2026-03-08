@@ -8,18 +8,20 @@ const BANNER_HEIGHT: u16 = 10;
 pub enum AppLayout {
     /// 起動スプラッシュ画面（バナーのみ全画面）
     Splash { area: Rect },
-    /// バナー（上部コンパクト） + 通常操作画面
-    BannerWithNormal {
+    /// バケット一覧時: 2ペイン [Current | Preview]
+    TwoPane {
         banner: Rect,
         header: Rect,
-        list: Rect,
+        current: Rect,
+        preview: Rect,
         footer: Rect,
     },
-    /// バナー（上部コンパクト） + プレビュー付き画面
-    BannerWithPreview {
+    /// バケット内: 3ペイン [Parent | Current | Preview]
+    ThreePane {
         banner: Rect,
         header: Rect,
-        list: Rect,
+        parent: Rect,
+        current: Rect,
         preview: Rect,
         footer: Rect,
     },
@@ -31,51 +33,59 @@ impl AppLayout {
         Self::Splash { area }
     }
 
-    /// バナー + 通常画面用レイアウト
-    pub fn banner_with_normal(area: Rect) -> Self {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(BANNER_HEIGHT), // Banner (compact)
-                Constraint::Length(3),             // Header (border + breadcrumb)
-                Constraint::Min(5),                // List (with border)
-                Constraint::Length(4),             // Footer (URL + help with border)
-            ])
-            .split(area);
-
-        Self::BannerWithNormal {
-            banner: chunks[0],
-            header: chunks[1],
-            list: chunks[2],
-            footer: chunks[3],
-        }
-    }
-
-    /// バナー + プレビュー付き画面用レイアウト
-    pub fn banner_with_preview(area: Rect) -> Self {
+    /// バケット一覧時: 2ペイン [Current | Preview]
+    pub fn two_pane(area: Rect) -> Self {
         let vertical = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(BANNER_HEIGHT), // Banner (compact)
-                Constraint::Length(3),             // Header
-                Constraint::Min(5),                // Content (list + preview)
-                Constraint::Length(4),             // Footer
+                Constraint::Length(BANNER_HEIGHT),
+                Constraint::Length(3),
+                Constraint::Min(5),
+                Constraint::Length(4),
+            ])
+            .split(area);
+
+        let horizontal = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(vertical[2]);
+
+        Self::TwoPane {
+            banner: vertical[0],
+            header: vertical[1],
+            current: horizontal[0],
+            preview: horizontal[1],
+            footer: vertical[3],
+        }
+    }
+
+    /// バケット内: 3ペイン [Parent | Current | Preview]
+    pub fn three_pane(area: Rect) -> Self {
+        let vertical = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(BANNER_HEIGHT),
+                Constraint::Length(3),
+                Constraint::Min(5),
+                Constraint::Length(4),
             ])
             .split(area);
 
         let horizontal = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(50), // List
-                Constraint::Percentage(50), // Preview
+                Constraint::Ratio(1, 7), // Parent
+                Constraint::Ratio(3, 7), // Current
+                Constraint::Ratio(3, 7), // Preview
             ])
             .split(vertical[2]);
 
-        Self::BannerWithPreview {
+        Self::ThreePane {
             banner: vertical[0],
             header: vertical[1],
-            list: horizontal[0],
-            preview: horizontal[1],
+            parent: horizontal[0],
+            current: horizontal[1],
+            preview: horizontal[2],
             footer: vertical[3],
         }
     }
