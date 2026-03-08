@@ -241,6 +241,32 @@ fn test_select_all() {
 }
 
 #[test]
+#[test]
+fn test_h_goes_back() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::with_prefix("my-bucket", "folder/");
+    app.mode = Mode::Normal;
+
+    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Char('h'))));
+    assert_eq!(app.current_path.bucket, Some("my-bucket".to_string()));
+    assert_eq!(app.current_path.prefix, "");
+    assert!(matches!(cmd, Some(Command::LoadItems(_))));
+}
+
+#[test]
+fn test_l_enters_item() {
+    let mut app = app_without_banner();
+    app.items = vec![S3Item::Bucket {
+        name: "my-bucket".into(),
+    }];
+    app.mode = Mode::Normal;
+
+    let (app, cmd) = app.handle_event(Event::Key(key_event(KeyCode::Char('l'))));
+    assert_eq!(app.current_path.bucket, Some("my-bucket".to_string()));
+    assert!(matches!(cmd, Some(Command::LoadItems(_))));
+}
+
+#[test]
 fn test_selection_cleared_on_navigation() {
     let mut app = app_without_banner();
     app.current_path = S3Path::bucket("my-bucket");

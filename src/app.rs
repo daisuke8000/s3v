@@ -86,8 +86,8 @@ impl App {
         match key.code {
             KeyCode::Up | KeyCode::Char('k') => (self.move_cursor_up(), None),
             KeyCode::Down | KeyCode::Char('j') => (self.move_cursor_down(), None),
-            KeyCode::Enter => self.enter_item(),
-            KeyCode::Esc => self.go_back(),
+            KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => self.enter_item(),
+            KeyCode::Char('h') | KeyCode::Left | KeyCode::Esc => self.go_back(),
             KeyCode::Char(' ') => (self.toggle_selection(), None),
             KeyCode::Char('a') => (self.toggle_select_all(), None),
             _ => (self, None),
