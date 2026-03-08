@@ -56,6 +56,22 @@ pub fn render_confirm_dialog(app: &App, frame: &mut Frame) {
                 )),
             ]
         }
+        Some(DownloadTarget::MultipleFiles {
+            keys, total_size, ..
+        }) => {
+            vec![
+                Line::from(Span::styled(
+                    format!("  {} files selected ", keys.len()),
+                    Style::default()
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                )),
+                Line::from(Span::styled(
+                    format!("  Total: {}", format_size(*total_size)),
+                    Style::default().fg(Color::Gray),
+                )),
+            ]
+        }
         Some(DownloadTarget::Folder {
             name,
             file_count,

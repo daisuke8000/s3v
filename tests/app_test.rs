@@ -882,3 +882,53 @@ fn test_download_confirm_q_key_does_not_quit() {
     assert_eq!(app.mode, Mode::DownloadConfirm);
     assert!(app.download_path.contains('q'));
 }
+
+#[test]
+fn test_download_multiple_files_selected() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::with_prefix("my-bucket", "folder/");
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "folder/a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.txt".into(),
+            key: "folder/b.txt".into(),
+            size: 200,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "c.txt".into(),
+            key: "folder/c.txt".into(),
+            size: 300,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+    // Space で 0, 1 を選択
+    app.selected.insert(0);
+    app.selected.insert(1);
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('d'))));
+    assert_eq!(app.mode, Mode::DownloadConfirm);
+    assert!(cmds.is_empty());
+
+    // MultipleFiles ターゲットで、選択した 2 ファイルが含まれる
+    match &app.download_target {
+        Some(download::DownloadTarget::MultipleFiles {
+            keys,
+            total_size,
+            base_prefix,
+        }) => {
+            assert_eq!(keys.len(), 2);
+            assert!(keys.contains(&"folder/a.txt".to_string()));
+            assert!(keys.contains(&"folder/b.txt".to_string()));
+            assert_eq!(*total_size, 300);
+            assert_eq!(base_prefix, "folder/");
+        }
+        other => panic!("Expected MultipleFiles, got {:?}", other),
+    }
+}

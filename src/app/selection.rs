@@ -34,11 +34,52 @@ impl App {
             Some(b) => b.clone(),
             None => return (self, vec![]),
         };
+        let download_path = super::download::default_download_path();
+
+        // 複数選択がある場合はすべての選択アイテムを対象にする
+        if !self.selected.is_empty() {
+            let selected_items: Vec<S3Item> = self.selected_items().into_iter().cloned().collect();
+
+            // ファイルの key と合計サイズを収集
+            let mut keys = Vec::new();
+            let mut total_size = 0u64;
+            for item in &selected_items {
+                if let S3Item::File { key, size, .. } = item {
+                    keys.push(key.clone());
+                    total_size += size;
+                }
+            }
+
+            if keys.is_empty() {
+                return (self, vec![]);
+            }
+
+            let base_prefix = self.current_path.prefix.clone();
+
+            return (
+                Self {
+                    mode: super::Mode::DownloadConfirm,
+                    download_target: Some(super::download::DownloadTarget::MultipleFiles {
+                        keys,
+                        total_size,
+                        base_prefix,
+                    }),
+                    download_path,
+                    confirm_focus: super::download::ConfirmFocus::default(),
+                    confirm_button: super::download::ConfirmButton::default(),
+                    path_completions: Vec::new(),
+                    completion_index: 0,
+                    ..self
+                },
+                vec![],
+            );
+        }
+
+        // 単一選択（カーソル位置）
         let item = match self.selected_item() {
             Some(item) => item.clone(),
             None => return (self, vec![]),
         };
-        let download_path = super::download::default_download_path();
 
         match item {
             S3Item::File {
@@ -82,8 +123,14 @@ impl App {
 
         let (keys, base_prefix) = match &self.download_target {
             Some(super::download::DownloadTarget::SingleFile { key, .. }) => {
-                (vec![key.clone()], String::new())
+                // 単一ファイル: key のディレクトリ部分を base_prefix に設定
+                // e.g. "folder/sub/test.json" → base_prefix="folder/sub/"
+                let bp = key.rfind('/').map(|i| &key[..=i]).unwrap_or("").to_string();
+                (vec![key.clone()], bp)
             }
+            Some(super::download::DownloadTarget::MultipleFiles {
+                keys, base_prefix, ..
+            }) => (keys.clone(), base_prefix.clone()),
             Some(super::download::DownloadTarget::Folder { prefix, keys, .. }) => {
                 // prefix の親を base_prefix にし、フォルダ名をローカルに保持する
                 // e.g. prefix="photos/vacation/" → parent="photos/" → relative="vacation/file.txt"

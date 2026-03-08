@@ -62,11 +62,7 @@ pub async fn download_file_with_structure(
         .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
 
     // base_prefix を除去して相対パスを得る
-    let relative = if base_prefix.is_empty() {
-        key.split('/').next_back().unwrap_or(key)
-    } else {
-        key.strip_prefix(base_prefix).unwrap_or(key)
-    };
+    let relative = key.strip_prefix(base_prefix).unwrap_or(key);
 
     let file_path = unique_path(&destination.join(relative));
 

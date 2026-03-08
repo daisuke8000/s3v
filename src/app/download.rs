@@ -26,6 +26,11 @@ pub enum DownloadTarget {
         key: String,
         size: u64,
     },
+    MultipleFiles {
+        keys: Vec<String>,
+        total_size: u64,
+        base_prefix: String,
+    },
     Folder {
         name: String,
         prefix: String,
