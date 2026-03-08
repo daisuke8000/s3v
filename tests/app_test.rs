@@ -185,3 +185,72 @@ fn test_app_quit() {
     assert!(!app.running);
     assert!(matches!(cmd, Some(Command::Quit)));
 }
+
+#[test]
+fn test_toggle_selection() {
+    let mut app = app_without_banner();
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.txt".into(),
+            key: "b.txt".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+
+    // Select first item
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char(' '))));
+    assert!(app.selected.contains(&0));
+
+    // Toggle off
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char(' '))));
+    assert!(!app.selected.contains(&0));
+}
+
+#[test]
+fn test_select_all() {
+    let mut app = app_without_banner();
+    app.items = vec![
+        S3Item::File {
+            name: "a.txt".into(),
+            key: "a.txt".into(),
+            size: 100,
+            last_modified: None,
+        },
+        S3Item::File {
+            name: "b.txt".into(),
+            key: "b.txt".into(),
+            size: 200,
+            last_modified: None,
+        },
+    ];
+    app.mode = Mode::Normal;
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('a'))));
+    assert_eq!(app.selected.len(), 2);
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('a'))));
+    assert!(app.selected.is_empty());
+}
+
+#[test]
+fn test_selection_cleared_on_navigation() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![S3Item::Folder {
+        name: "folder/".into(),
+        prefix: "folder/".into(),
+    }];
+    app.mode = Mode::Normal;
+    app.selected.insert(0);
+
+    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Enter)));
+    assert!(app.selected.is_empty());
+}

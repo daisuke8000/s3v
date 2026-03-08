@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::command::Command;
@@ -27,6 +29,8 @@ pub struct App {
     pub running: bool,
     /// 起動バナー表示フラグ
     pub show_banner: bool,
+    /// 選択されたアイテムのインデックス
+    pub selected: HashSet<usize>,
 }
 
 impl Default for App {
@@ -44,6 +48,7 @@ impl App {
             mode: Mode::Loading,
             running: true,
             show_banner: true,
+            selected: HashSet::new(),
         }
     }
 
@@ -83,6 +88,8 @@ impl App {
             KeyCode::Down | KeyCode::Char('j') => (self.move_cursor_down(), None),
             KeyCode::Enter => self.enter_item(),
             KeyCode::Esc => self.go_back(),
+            KeyCode::Char(' ') => (self.toggle_selection(), None),
+            KeyCode::Char('a') => (self.toggle_select_all(), None),
             _ => (self, None),
         }
     }
@@ -93,6 +100,7 @@ impl App {
                 items,
                 cursor: 0,
                 mode: Mode::Normal,
+                selected: HashSet::new(),
                 ..self
             },
             None,
@@ -126,6 +134,7 @@ impl App {
                         Self {
                             current_path: new_path.clone(),
                             mode: Mode::Loading,
+                            selected: HashSet::new(),
                             ..self
                         },
                         Some(Command::LoadItems(new_path)),
@@ -140,6 +149,7 @@ impl App {
                         Self {
                             current_path: new_path.clone(),
                             mode: Mode::Loading,
+                            selected: HashSet::new(),
                             ..self
                         },
                         Some(Command::LoadItems(new_path)),
@@ -161,6 +171,7 @@ impl App {
                 Self {
                     current_path: parent.clone(),
                     mode: Mode::Loading,
+                    selected: HashSet::new(),
                     ..self
                 },
                 Some(Command::LoadItems(parent)),
@@ -178,5 +189,30 @@ impl App {
     /// 選択中のアイテムを返す
     pub fn selected_item(&self) -> Option<&S3Item> {
         self.items.get(self.cursor)
+    }
+
+    fn toggle_selection(mut self) -> Self {
+        if self.selected.contains(&self.cursor) {
+            self.selected.remove(&self.cursor);
+        } else {
+            self.selected.insert(self.cursor);
+        }
+        self
+    }
+
+    fn toggle_select_all(mut self) -> Self {
+        if self.selected.len() == self.items.len() {
+            self.selected.clear();
+        } else {
+            self.selected = (0..self.items.len()).collect();
+        }
+        self
+    }
+
+    pub fn selected_items(&self) -> Vec<&S3Item> {
+        self.selected
+            .iter()
+            .filter_map(|&i| self.items.get(i))
+            .collect()
     }
 }
