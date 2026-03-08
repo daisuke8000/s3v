@@ -1,0 +1,5617 @@
+{
+  "project": "s3v",
+  "version": "0.1.0",
+  "description": "S3 Viewer TUI Application",
+  "config": {
+    "max_connections": 10,
+    "timeout_seconds": 30,
+    "retry_count": 3,
+    "regions": [
+      "ap-northeast-1",
+      "us-east-1",
+      "eu-west-1"
+    ]
+  },
+  "buckets": [
+    {
+      "name": "sample-bucket-001",
+      "region": "us-east-1",
+      "created": "2025-02-02T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "cost_center": "CC-1001"
+      },
+      "objects": [
+        {
+          "key": "data/001/file-0001.json",
+          "size": 2048,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003e9"
+          }
+        },
+        {
+          "key": "data/001/file-0002.json",
+          "size": 3072,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003ea"
+          }
+        },
+        {
+          "key": "data/001/file-0003.json",
+          "size": 4096,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003eb"
+          }
+        },
+        {
+          "key": "data/001/file-0004.json",
+          "size": 5120,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003ec"
+          }
+        },
+        {
+          "key": "data/001/file-0005.json",
+          "size": 6144,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003ed"
+          }
+        },
+        {
+          "key": "data/001/file-0006.json",
+          "size": 7168,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003ee"
+          }
+        },
+        {
+          "key": "data/001/file-0007.json",
+          "size": 8192,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003ef"
+          }
+        },
+        {
+          "key": "data/001/file-0008.json",
+          "size": 9216,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003f0"
+          }
+        },
+        {
+          "key": "data/001/file-0009.json",
+          "size": 10240,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003f1"
+          }
+        },
+        {
+          "key": "data/001/file-0010.json",
+          "size": 11264,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000003f2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-002",
+      "region": "eu-west-1",
+      "created": "2025-03-03T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "data",
+        "cost_center": "CC-1002"
+      },
+      "objects": [
+        {
+          "key": "data/002/file-0001.json",
+          "size": 3072,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d1"
+          }
+        },
+        {
+          "key": "data/002/file-0002.json",
+          "size": 4096,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d2"
+          }
+        },
+        {
+          "key": "data/002/file-0003.json",
+          "size": 5120,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d3"
+          }
+        },
+        {
+          "key": "data/002/file-0004.json",
+          "size": 6144,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d4"
+          }
+        },
+        {
+          "key": "data/002/file-0005.json",
+          "size": 7168,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d5"
+          }
+        },
+        {
+          "key": "data/002/file-0006.json",
+          "size": 8192,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d6"
+          }
+        },
+        {
+          "key": "data/002/file-0007.json",
+          "size": 9216,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d7"
+          }
+        },
+        {
+          "key": "data/002/file-0008.json",
+          "size": 10240,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d8"
+          }
+        },
+        {
+          "key": "data/002/file-0009.json",
+          "size": 11264,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007d9"
+          }
+        },
+        {
+          "key": "data/002/file-0010.json",
+          "size": 12288,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000007da"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-003",
+      "region": "ap-northeast-1",
+      "created": "2025-04-04T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "infra",
+        "cost_center": "CC-1003"
+      },
+      "objects": [
+        {
+          "key": "data/003/file-0001.json",
+          "size": 4096,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bb9"
+          }
+        },
+        {
+          "key": "data/003/file-0002.json",
+          "size": 5120,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bba"
+          }
+        },
+        {
+          "key": "data/003/file-0003.json",
+          "size": 6144,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bbb"
+          }
+        },
+        {
+          "key": "data/003/file-0004.json",
+          "size": 7168,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bbc"
+          }
+        },
+        {
+          "key": "data/003/file-0005.json",
+          "size": 8192,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bbd"
+          }
+        },
+        {
+          "key": "data/003/file-0006.json",
+          "size": 9216,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bbe"
+          }
+        },
+        {
+          "key": "data/003/file-0007.json",
+          "size": 10240,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bbf"
+          }
+        },
+        {
+          "key": "data/003/file-0008.json",
+          "size": 11264,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bc0"
+          }
+        },
+        {
+          "key": "data/003/file-0009.json",
+          "size": 12288,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bc1"
+          }
+        },
+        {
+          "key": "data/003/file-0010.json",
+          "size": 13312,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000bc2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-004",
+      "region": "us-east-1",
+      "created": "2025-05-05T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "cost_center": "CC-1004"
+      },
+      "objects": [
+        {
+          "key": "data/004/file-0001.json",
+          "size": 5120,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa1"
+          }
+        },
+        {
+          "key": "data/004/file-0002.json",
+          "size": 6144,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa2"
+          }
+        },
+        {
+          "key": "data/004/file-0003.json",
+          "size": 7168,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa3"
+          }
+        },
+        {
+          "key": "data/004/file-0004.json",
+          "size": 8192,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa4"
+          }
+        },
+        {
+          "key": "data/004/file-0005.json",
+          "size": 9216,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa5"
+          }
+        },
+        {
+          "key": "data/004/file-0006.json",
+          "size": 10240,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa6"
+          }
+        },
+        {
+          "key": "data/004/file-0007.json",
+          "size": 11264,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa7"
+          }
+        },
+        {
+          "key": "data/004/file-0008.json",
+          "size": 12288,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa8"
+          }
+        },
+        {
+          "key": "data/004/file-0009.json",
+          "size": 13312,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000fa9"
+          }
+        },
+        {
+          "key": "data/004/file-0010.json",
+          "size": 14336,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00000faa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-005",
+      "region": "eu-west-1",
+      "created": "2025-06-06T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "cost_center": "CC-1005"
+      },
+      "objects": [
+        {
+          "key": "data/005/file-0001.json",
+          "size": 6144,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001389"
+          }
+        },
+        {
+          "key": "data/005/file-0002.json",
+          "size": 7168,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138a"
+          }
+        },
+        {
+          "key": "data/005/file-0003.json",
+          "size": 8192,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138b"
+          }
+        },
+        {
+          "key": "data/005/file-0004.json",
+          "size": 9216,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138c"
+          }
+        },
+        {
+          "key": "data/005/file-0005.json",
+          "size": 10240,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138d"
+          }
+        },
+        {
+          "key": "data/005/file-0006.json",
+          "size": 11264,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138e"
+          }
+        },
+        {
+          "key": "data/005/file-0007.json",
+          "size": 12288,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000138f"
+          }
+        },
+        {
+          "key": "data/005/file-0008.json",
+          "size": 13312,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001390"
+          }
+        },
+        {
+          "key": "data/005/file-0009.json",
+          "size": 14336,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001391"
+          }
+        },
+        {
+          "key": "data/005/file-0010.json",
+          "size": 15360,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001392"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-006",
+      "region": "ap-northeast-1",
+      "created": "2025-07-07T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "data",
+        "cost_center": "CC-1006"
+      },
+      "objects": [
+        {
+          "key": "data/006/file-0001.json",
+          "size": 7168,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001771"
+          }
+        },
+        {
+          "key": "data/006/file-0002.json",
+          "size": 8192,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001772"
+          }
+        },
+        {
+          "key": "data/006/file-0003.json",
+          "size": 9216,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001773"
+          }
+        },
+        {
+          "key": "data/006/file-0004.json",
+          "size": 10240,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001774"
+          }
+        },
+        {
+          "key": "data/006/file-0005.json",
+          "size": 11264,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001775"
+          }
+        },
+        {
+          "key": "data/006/file-0006.json",
+          "size": 12288,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001776"
+          }
+        },
+        {
+          "key": "data/006/file-0007.json",
+          "size": 13312,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001777"
+          }
+        },
+        {
+          "key": "data/006/file-0008.json",
+          "size": 14336,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001778"
+          }
+        },
+        {
+          "key": "data/006/file-0009.json",
+          "size": 15360,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001779"
+          }
+        },
+        {
+          "key": "data/006/file-0010.json",
+          "size": 16384,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000177a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-007",
+      "region": "us-east-1",
+      "created": "2025-08-08T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "infra",
+        "cost_center": "CC-1007"
+      },
+      "objects": [
+        {
+          "key": "data/007/file-0001.json",
+          "size": 8192,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b59"
+          }
+        },
+        {
+          "key": "data/007/file-0002.json",
+          "size": 9216,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5a"
+          }
+        },
+        {
+          "key": "data/007/file-0003.json",
+          "size": 10240,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5b"
+          }
+        },
+        {
+          "key": "data/007/file-0004.json",
+          "size": 11264,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5c"
+          }
+        },
+        {
+          "key": "data/007/file-0005.json",
+          "size": 12288,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5d"
+          }
+        },
+        {
+          "key": "data/007/file-0006.json",
+          "size": 13312,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5e"
+          }
+        },
+        {
+          "key": "data/007/file-0007.json",
+          "size": 14336,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b5f"
+          }
+        },
+        {
+          "key": "data/007/file-0008.json",
+          "size": 15360,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b60"
+          }
+        },
+        {
+          "key": "data/007/file-0009.json",
+          "size": 16384,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b61"
+          }
+        },
+        {
+          "key": "data/007/file-0010.json",
+          "size": 17408,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001b62"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-008",
+      "region": "eu-west-1",
+      "created": "2025-09-09T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "cost_center": "CC-1008"
+      },
+      "objects": [
+        {
+          "key": "data/008/file-0001.json",
+          "size": 9216,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f41"
+          }
+        },
+        {
+          "key": "data/008/file-0002.json",
+          "size": 10240,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f42"
+          }
+        },
+        {
+          "key": "data/008/file-0003.json",
+          "size": 11264,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f43"
+          }
+        },
+        {
+          "key": "data/008/file-0004.json",
+          "size": 12288,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f44"
+          }
+        },
+        {
+          "key": "data/008/file-0005.json",
+          "size": 13312,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f45"
+          }
+        },
+        {
+          "key": "data/008/file-0006.json",
+          "size": 14336,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f46"
+          }
+        },
+        {
+          "key": "data/008/file-0007.json",
+          "size": 15360,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f47"
+          }
+        },
+        {
+          "key": "data/008/file-0008.json",
+          "size": 16384,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f48"
+          }
+        },
+        {
+          "key": "data/008/file-0009.json",
+          "size": 17408,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f49"
+          }
+        },
+        {
+          "key": "data/008/file-0010.json",
+          "size": 18432,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00001f4a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-009",
+      "region": "ap-northeast-1",
+      "created": "2025-10-10T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "cost_center": "CC-1009"
+      },
+      "objects": [
+        {
+          "key": "data/009/file-0001.json",
+          "size": 10240,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002329"
+          }
+        },
+        {
+          "key": "data/009/file-0002.json",
+          "size": 11264,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232a"
+          }
+        },
+        {
+          "key": "data/009/file-0003.json",
+          "size": 12288,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232b"
+          }
+        },
+        {
+          "key": "data/009/file-0004.json",
+          "size": 13312,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232c"
+          }
+        },
+        {
+          "key": "data/009/file-0005.json",
+          "size": 14336,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232d"
+          }
+        },
+        {
+          "key": "data/009/file-0006.json",
+          "size": 15360,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232e"
+          }
+        },
+        {
+          "key": "data/009/file-0007.json",
+          "size": 16384,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000232f"
+          }
+        },
+        {
+          "key": "data/009/file-0008.json",
+          "size": 17408,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002330"
+          }
+        },
+        {
+          "key": "data/009/file-0009.json",
+          "size": 18432,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002331"
+          }
+        },
+        {
+          "key": "data/009/file-0010.json",
+          "size": 19456,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002332"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-010",
+      "region": "us-east-1",
+      "created": "2025-11-11T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "data",
+        "cost_center": "CC-1010"
+      },
+      "objects": [
+        {
+          "key": "data/010/file-0001.json",
+          "size": 11264,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002711"
+          }
+        },
+        {
+          "key": "data/010/file-0002.json",
+          "size": 12288,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002712"
+          }
+        },
+        {
+          "key": "data/010/file-0003.json",
+          "size": 13312,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002713"
+          }
+        },
+        {
+          "key": "data/010/file-0004.json",
+          "size": 14336,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002714"
+          }
+        },
+        {
+          "key": "data/010/file-0005.json",
+          "size": 15360,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002715"
+          }
+        },
+        {
+          "key": "data/010/file-0006.json",
+          "size": 16384,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002716"
+          }
+        },
+        {
+          "key": "data/010/file-0007.json",
+          "size": 17408,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002717"
+          }
+        },
+        {
+          "key": "data/010/file-0008.json",
+          "size": 18432,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002718"
+          }
+        },
+        {
+          "key": "data/010/file-0009.json",
+          "size": 19456,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002719"
+          }
+        },
+        {
+          "key": "data/010/file-0010.json",
+          "size": 20480,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000271a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-011",
+      "region": "eu-west-1",
+      "created": "2025-12-12T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "infra",
+        "cost_center": "CC-1011"
+      },
+      "objects": [
+        {
+          "key": "data/011/file-0001.json",
+          "size": 12288,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002af9"
+          }
+        },
+        {
+          "key": "data/011/file-0002.json",
+          "size": 13312,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002afa"
+          }
+        },
+        {
+          "key": "data/011/file-0003.json",
+          "size": 14336,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002afb"
+          }
+        },
+        {
+          "key": "data/011/file-0004.json",
+          "size": 15360,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002afc"
+          }
+        },
+        {
+          "key": "data/011/file-0005.json",
+          "size": 16384,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002afd"
+          }
+        },
+        {
+          "key": "data/011/file-0006.json",
+          "size": 17408,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002afe"
+          }
+        },
+        {
+          "key": "data/011/file-0007.json",
+          "size": 18432,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002aff"
+          }
+        },
+        {
+          "key": "data/011/file-0008.json",
+          "size": 19456,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002b00"
+          }
+        },
+        {
+          "key": "data/011/file-0009.json",
+          "size": 20480,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002b01"
+          }
+        },
+        {
+          "key": "data/011/file-0010.json",
+          "size": 21504,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002b02"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-012",
+      "region": "ap-northeast-1",
+      "created": "2025-01-13T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "cost_center": "CC-1012"
+      },
+      "objects": [
+        {
+          "key": "data/012/file-0001.json",
+          "size": 13312,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee1"
+          }
+        },
+        {
+          "key": "data/012/file-0002.json",
+          "size": 14336,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee2"
+          }
+        },
+        {
+          "key": "data/012/file-0003.json",
+          "size": 15360,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee3"
+          }
+        },
+        {
+          "key": "data/012/file-0004.json",
+          "size": 16384,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee4"
+          }
+        },
+        {
+          "key": "data/012/file-0005.json",
+          "size": 17408,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee5"
+          }
+        },
+        {
+          "key": "data/012/file-0006.json",
+          "size": 18432,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee6"
+          }
+        },
+        {
+          "key": "data/012/file-0007.json",
+          "size": 19456,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee7"
+          }
+        },
+        {
+          "key": "data/012/file-0008.json",
+          "size": 20480,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee8"
+          }
+        },
+        {
+          "key": "data/012/file-0009.json",
+          "size": 21504,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002ee9"
+          }
+        },
+        {
+          "key": "data/012/file-0010.json",
+          "size": 22528,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00002eea"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-013",
+      "region": "us-east-1",
+      "created": "2025-02-14T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "cost_center": "CC-1013"
+      },
+      "objects": [
+        {
+          "key": "data/013/file-0001.json",
+          "size": 14336,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032c9"
+          }
+        },
+        {
+          "key": "data/013/file-0002.json",
+          "size": 15360,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032ca"
+          }
+        },
+        {
+          "key": "data/013/file-0003.json",
+          "size": 16384,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032cb"
+          }
+        },
+        {
+          "key": "data/013/file-0004.json",
+          "size": 17408,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032cc"
+          }
+        },
+        {
+          "key": "data/013/file-0005.json",
+          "size": 18432,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032cd"
+          }
+        },
+        {
+          "key": "data/013/file-0006.json",
+          "size": 19456,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032ce"
+          }
+        },
+        {
+          "key": "data/013/file-0007.json",
+          "size": 20480,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032cf"
+          }
+        },
+        {
+          "key": "data/013/file-0008.json",
+          "size": 21504,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032d0"
+          }
+        },
+        {
+          "key": "data/013/file-0009.json",
+          "size": 22528,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032d1"
+          }
+        },
+        {
+          "key": "data/013/file-0010.json",
+          "size": 23552,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000032d2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-014",
+      "region": "eu-west-1",
+      "created": "2025-03-15T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "data",
+        "cost_center": "CC-1014"
+      },
+      "objects": [
+        {
+          "key": "data/014/file-0001.json",
+          "size": 15360,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b1"
+          }
+        },
+        {
+          "key": "data/014/file-0002.json",
+          "size": 16384,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b2"
+          }
+        },
+        {
+          "key": "data/014/file-0003.json",
+          "size": 17408,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b3"
+          }
+        },
+        {
+          "key": "data/014/file-0004.json",
+          "size": 18432,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b4"
+          }
+        },
+        {
+          "key": "data/014/file-0005.json",
+          "size": 19456,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b5"
+          }
+        },
+        {
+          "key": "data/014/file-0006.json",
+          "size": 20480,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b6"
+          }
+        },
+        {
+          "key": "data/014/file-0007.json",
+          "size": 21504,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b7"
+          }
+        },
+        {
+          "key": "data/014/file-0008.json",
+          "size": 22528,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b8"
+          }
+        },
+        {
+          "key": "data/014/file-0009.json",
+          "size": 23552,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036b9"
+          }
+        },
+        {
+          "key": "data/014/file-0010.json",
+          "size": 24576,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000036ba"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-015",
+      "region": "ap-northeast-1",
+      "created": "2025-04-16T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "infra",
+        "cost_center": "CC-1015"
+      },
+      "objects": [
+        {
+          "key": "data/015/file-0001.json",
+          "size": 16384,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a99"
+          }
+        },
+        {
+          "key": "data/015/file-0002.json",
+          "size": 17408,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9a"
+          }
+        },
+        {
+          "key": "data/015/file-0003.json",
+          "size": 18432,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9b"
+          }
+        },
+        {
+          "key": "data/015/file-0004.json",
+          "size": 19456,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9c"
+          }
+        },
+        {
+          "key": "data/015/file-0005.json",
+          "size": 20480,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9d"
+          }
+        },
+        {
+          "key": "data/015/file-0006.json",
+          "size": 21504,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9e"
+          }
+        },
+        {
+          "key": "data/015/file-0007.json",
+          "size": 22528,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003a9f"
+          }
+        },
+        {
+          "key": "data/015/file-0008.json",
+          "size": 23552,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003aa0"
+          }
+        },
+        {
+          "key": "data/015/file-0009.json",
+          "size": 24576,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003aa1"
+          }
+        },
+        {
+          "key": "data/015/file-0010.json",
+          "size": 25600,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003aa2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-016",
+      "region": "us-east-1",
+      "created": "2025-05-17T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "cost_center": "CC-1016"
+      },
+      "objects": [
+        {
+          "key": "data/016/file-0001.json",
+          "size": 17408,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e81"
+          }
+        },
+        {
+          "key": "data/016/file-0002.json",
+          "size": 18432,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e82"
+          }
+        },
+        {
+          "key": "data/016/file-0003.json",
+          "size": 19456,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e83"
+          }
+        },
+        {
+          "key": "data/016/file-0004.json",
+          "size": 20480,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e84"
+          }
+        },
+        {
+          "key": "data/016/file-0005.json",
+          "size": 21504,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e85"
+          }
+        },
+        {
+          "key": "data/016/file-0006.json",
+          "size": 22528,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e86"
+          }
+        },
+        {
+          "key": "data/016/file-0007.json",
+          "size": 23552,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e87"
+          }
+        },
+        {
+          "key": "data/016/file-0008.json",
+          "size": 24576,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e88"
+          }
+        },
+        {
+          "key": "data/016/file-0009.json",
+          "size": 25600,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e89"
+          }
+        },
+        {
+          "key": "data/016/file-0010.json",
+          "size": 26624,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00003e8a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-017",
+      "region": "eu-west-1",
+      "created": "2025-06-18T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "cost_center": "CC-1017"
+      },
+      "objects": [
+        {
+          "key": "data/017/file-0001.json",
+          "size": 18432,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004269"
+          }
+        },
+        {
+          "key": "data/017/file-0002.json",
+          "size": 19456,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426a"
+          }
+        },
+        {
+          "key": "data/017/file-0003.json",
+          "size": 20480,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426b"
+          }
+        },
+        {
+          "key": "data/017/file-0004.json",
+          "size": 21504,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426c"
+          }
+        },
+        {
+          "key": "data/017/file-0005.json",
+          "size": 22528,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426d"
+          }
+        },
+        {
+          "key": "data/017/file-0006.json",
+          "size": 23552,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426e"
+          }
+        },
+        {
+          "key": "data/017/file-0007.json",
+          "size": 24576,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000426f"
+          }
+        },
+        {
+          "key": "data/017/file-0008.json",
+          "size": 25600,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004270"
+          }
+        },
+        {
+          "key": "data/017/file-0009.json",
+          "size": 26624,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004271"
+          }
+        },
+        {
+          "key": "data/017/file-0010.json",
+          "size": 27648,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004272"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-018",
+      "region": "ap-northeast-1",
+      "created": "2025-07-19T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "data",
+        "cost_center": "CC-1018"
+      },
+      "objects": [
+        {
+          "key": "data/018/file-0001.json",
+          "size": 19456,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004651"
+          }
+        },
+        {
+          "key": "data/018/file-0002.json",
+          "size": 20480,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004652"
+          }
+        },
+        {
+          "key": "data/018/file-0003.json",
+          "size": 21504,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004653"
+          }
+        },
+        {
+          "key": "data/018/file-0004.json",
+          "size": 22528,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004654"
+          }
+        },
+        {
+          "key": "data/018/file-0005.json",
+          "size": 23552,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004655"
+          }
+        },
+        {
+          "key": "data/018/file-0006.json",
+          "size": 24576,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004656"
+          }
+        },
+        {
+          "key": "data/018/file-0007.json",
+          "size": 25600,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004657"
+          }
+        },
+        {
+          "key": "data/018/file-0008.json",
+          "size": 26624,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004658"
+          }
+        },
+        {
+          "key": "data/018/file-0009.json",
+          "size": 27648,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004659"
+          }
+        },
+        {
+          "key": "data/018/file-0010.json",
+          "size": 28672,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000465a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-019",
+      "region": "us-east-1",
+      "created": "2025-08-20T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "infra",
+        "cost_center": "CC-1019"
+      },
+      "objects": [
+        {
+          "key": "data/019/file-0001.json",
+          "size": 20480,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a39"
+          }
+        },
+        {
+          "key": "data/019/file-0002.json",
+          "size": 21504,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3a"
+          }
+        },
+        {
+          "key": "data/019/file-0003.json",
+          "size": 22528,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3b"
+          }
+        },
+        {
+          "key": "data/019/file-0004.json",
+          "size": 23552,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3c"
+          }
+        },
+        {
+          "key": "data/019/file-0005.json",
+          "size": 24576,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3d"
+          }
+        },
+        {
+          "key": "data/019/file-0006.json",
+          "size": 25600,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3e"
+          }
+        },
+        {
+          "key": "data/019/file-0007.json",
+          "size": 26624,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a3f"
+          }
+        },
+        {
+          "key": "data/019/file-0008.json",
+          "size": 27648,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a40"
+          }
+        },
+        {
+          "key": "data/019/file-0009.json",
+          "size": 28672,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a41"
+          }
+        },
+        {
+          "key": "data/019/file-0010.json",
+          "size": 29696,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004a42"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-020",
+      "region": "eu-west-1",
+      "created": "2025-09-21T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "cost_center": "CC-1020"
+      },
+      "objects": [
+        {
+          "key": "data/020/file-0001.json",
+          "size": 21504,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e21"
+          }
+        },
+        {
+          "key": "data/020/file-0002.json",
+          "size": 22528,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e22"
+          }
+        },
+        {
+          "key": "data/020/file-0003.json",
+          "size": 23552,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e23"
+          }
+        },
+        {
+          "key": "data/020/file-0004.json",
+          "size": 24576,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e24"
+          }
+        },
+        {
+          "key": "data/020/file-0005.json",
+          "size": 25600,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e25"
+          }
+        },
+        {
+          "key": "data/020/file-0006.json",
+          "size": 26624,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e26"
+          }
+        },
+        {
+          "key": "data/020/file-0007.json",
+          "size": 27648,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e27"
+          }
+        },
+        {
+          "key": "data/020/file-0008.json",
+          "size": 28672,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e28"
+          }
+        },
+        {
+          "key": "data/020/file-0009.json",
+          "size": 29696,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e29"
+          }
+        },
+        {
+          "key": "data/020/file-0010.json",
+          "size": 30720,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00004e2a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-021",
+      "region": "ap-northeast-1",
+      "created": "2025-10-22T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "cost_center": "CC-1021"
+      },
+      "objects": [
+        {
+          "key": "data/021/file-0001.json",
+          "size": 22528,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005209"
+          }
+        },
+        {
+          "key": "data/021/file-0002.json",
+          "size": 23552,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520a"
+          }
+        },
+        {
+          "key": "data/021/file-0003.json",
+          "size": 24576,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520b"
+          }
+        },
+        {
+          "key": "data/021/file-0004.json",
+          "size": 25600,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520c"
+          }
+        },
+        {
+          "key": "data/021/file-0005.json",
+          "size": 26624,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520d"
+          }
+        },
+        {
+          "key": "data/021/file-0006.json",
+          "size": 27648,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520e"
+          }
+        },
+        {
+          "key": "data/021/file-0007.json",
+          "size": 28672,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000520f"
+          }
+        },
+        {
+          "key": "data/021/file-0008.json",
+          "size": 29696,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005210"
+          }
+        },
+        {
+          "key": "data/021/file-0009.json",
+          "size": 30720,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005211"
+          }
+        },
+        {
+          "key": "data/021/file-0010.json",
+          "size": 31744,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005212"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-022",
+      "region": "us-east-1",
+      "created": "2025-11-23T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "data",
+        "cost_center": "CC-1022"
+      },
+      "objects": [
+        {
+          "key": "data/022/file-0001.json",
+          "size": 23552,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f1"
+          }
+        },
+        {
+          "key": "data/022/file-0002.json",
+          "size": 24576,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f2"
+          }
+        },
+        {
+          "key": "data/022/file-0003.json",
+          "size": 25600,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f3"
+          }
+        },
+        {
+          "key": "data/022/file-0004.json",
+          "size": 26624,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f4"
+          }
+        },
+        {
+          "key": "data/022/file-0005.json",
+          "size": 27648,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f5"
+          }
+        },
+        {
+          "key": "data/022/file-0006.json",
+          "size": 28672,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f6"
+          }
+        },
+        {
+          "key": "data/022/file-0007.json",
+          "size": 29696,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f7"
+          }
+        },
+        {
+          "key": "data/022/file-0008.json",
+          "size": 30720,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f8"
+          }
+        },
+        {
+          "key": "data/022/file-0009.json",
+          "size": 31744,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055f9"
+          }
+        },
+        {
+          "key": "data/022/file-0010.json",
+          "size": 32768,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000055fa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-023",
+      "region": "eu-west-1",
+      "created": "2025-12-24T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "infra",
+        "cost_center": "CC-1023"
+      },
+      "objects": [
+        {
+          "key": "data/023/file-0001.json",
+          "size": 24576,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059d9"
+          }
+        },
+        {
+          "key": "data/023/file-0002.json",
+          "size": 25600,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059da"
+          }
+        },
+        {
+          "key": "data/023/file-0003.json",
+          "size": 26624,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059db"
+          }
+        },
+        {
+          "key": "data/023/file-0004.json",
+          "size": 27648,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059dc"
+          }
+        },
+        {
+          "key": "data/023/file-0005.json",
+          "size": 28672,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059dd"
+          }
+        },
+        {
+          "key": "data/023/file-0006.json",
+          "size": 29696,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059de"
+          }
+        },
+        {
+          "key": "data/023/file-0007.json",
+          "size": 30720,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059df"
+          }
+        },
+        {
+          "key": "data/023/file-0008.json",
+          "size": 31744,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059e0"
+          }
+        },
+        {
+          "key": "data/023/file-0009.json",
+          "size": 32768,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059e1"
+          }
+        },
+        {
+          "key": "data/023/file-0010.json",
+          "size": 33792,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000059e2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-024",
+      "region": "ap-northeast-1",
+      "created": "2025-01-25T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "cost_center": "CC-1024"
+      },
+      "objects": [
+        {
+          "key": "data/024/file-0001.json",
+          "size": 25600,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc1"
+          }
+        },
+        {
+          "key": "data/024/file-0002.json",
+          "size": 26624,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc2"
+          }
+        },
+        {
+          "key": "data/024/file-0003.json",
+          "size": 27648,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc3"
+          }
+        },
+        {
+          "key": "data/024/file-0004.json",
+          "size": 28672,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc4"
+          }
+        },
+        {
+          "key": "data/024/file-0005.json",
+          "size": 29696,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc5"
+          }
+        },
+        {
+          "key": "data/024/file-0006.json",
+          "size": 30720,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc6"
+          }
+        },
+        {
+          "key": "data/024/file-0007.json",
+          "size": 31744,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc7"
+          }
+        },
+        {
+          "key": "data/024/file-0008.json",
+          "size": 32768,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc8"
+          }
+        },
+        {
+          "key": "data/024/file-0009.json",
+          "size": 33792,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dc9"
+          }
+        },
+        {
+          "key": "data/024/file-0010.json",
+          "size": 34816,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00005dca"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-025",
+      "region": "us-east-1",
+      "created": "2025-02-26T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "cost_center": "CC-1025"
+      },
+      "objects": [
+        {
+          "key": "data/025/file-0001.json",
+          "size": 26624,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061a9"
+          }
+        },
+        {
+          "key": "data/025/file-0002.json",
+          "size": 27648,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061aa"
+          }
+        },
+        {
+          "key": "data/025/file-0003.json",
+          "size": 28672,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061ab"
+          }
+        },
+        {
+          "key": "data/025/file-0004.json",
+          "size": 29696,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061ac"
+          }
+        },
+        {
+          "key": "data/025/file-0005.json",
+          "size": 30720,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061ad"
+          }
+        },
+        {
+          "key": "data/025/file-0006.json",
+          "size": 31744,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061ae"
+          }
+        },
+        {
+          "key": "data/025/file-0007.json",
+          "size": 32768,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061af"
+          }
+        },
+        {
+          "key": "data/025/file-0008.json",
+          "size": 33792,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061b0"
+          }
+        },
+        {
+          "key": "data/025/file-0009.json",
+          "size": 34816,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061b1"
+          }
+        },
+        {
+          "key": "data/025/file-0010.json",
+          "size": 35840,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000061b2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-026",
+      "region": "eu-west-1",
+      "created": "2025-03-27T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "data",
+        "cost_center": "CC-1026"
+      },
+      "objects": [
+        {
+          "key": "data/026/file-0001.json",
+          "size": 27648,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006591"
+          }
+        },
+        {
+          "key": "data/026/file-0002.json",
+          "size": 28672,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006592"
+          }
+        },
+        {
+          "key": "data/026/file-0003.json",
+          "size": 29696,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006593"
+          }
+        },
+        {
+          "key": "data/026/file-0004.json",
+          "size": 30720,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006594"
+          }
+        },
+        {
+          "key": "data/026/file-0005.json",
+          "size": 31744,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006595"
+          }
+        },
+        {
+          "key": "data/026/file-0006.json",
+          "size": 32768,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006596"
+          }
+        },
+        {
+          "key": "data/026/file-0007.json",
+          "size": 33792,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006597"
+          }
+        },
+        {
+          "key": "data/026/file-0008.json",
+          "size": 34816,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006598"
+          }
+        },
+        {
+          "key": "data/026/file-0009.json",
+          "size": 35840,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006599"
+          }
+        },
+        {
+          "key": "data/026/file-0010.json",
+          "size": 36864,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000659a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-027",
+      "region": "ap-northeast-1",
+      "created": "2025-04-28T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "infra",
+        "cost_center": "CC-1027"
+      },
+      "objects": [
+        {
+          "key": "data/027/file-0001.json",
+          "size": 28672,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006979"
+          }
+        },
+        {
+          "key": "data/027/file-0002.json",
+          "size": 29696,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697a"
+          }
+        },
+        {
+          "key": "data/027/file-0003.json",
+          "size": 30720,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697b"
+          }
+        },
+        {
+          "key": "data/027/file-0004.json",
+          "size": 31744,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697c"
+          }
+        },
+        {
+          "key": "data/027/file-0005.json",
+          "size": 32768,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697d"
+          }
+        },
+        {
+          "key": "data/027/file-0006.json",
+          "size": 33792,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697e"
+          }
+        },
+        {
+          "key": "data/027/file-0007.json",
+          "size": 34816,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000697f"
+          }
+        },
+        {
+          "key": "data/027/file-0008.json",
+          "size": 35840,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006980"
+          }
+        },
+        {
+          "key": "data/027/file-0009.json",
+          "size": 36864,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006981"
+          }
+        },
+        {
+          "key": "data/027/file-0010.json",
+          "size": 37888,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006982"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-028",
+      "region": "us-east-1",
+      "created": "2025-05-01T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "cost_center": "CC-1028"
+      },
+      "objects": [
+        {
+          "key": "data/028/file-0001.json",
+          "size": 29696,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d61"
+          }
+        },
+        {
+          "key": "data/028/file-0002.json",
+          "size": 30720,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d62"
+          }
+        },
+        {
+          "key": "data/028/file-0003.json",
+          "size": 31744,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d63"
+          }
+        },
+        {
+          "key": "data/028/file-0004.json",
+          "size": 32768,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d64"
+          }
+        },
+        {
+          "key": "data/028/file-0005.json",
+          "size": 33792,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d65"
+          }
+        },
+        {
+          "key": "data/028/file-0006.json",
+          "size": 34816,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d66"
+          }
+        },
+        {
+          "key": "data/028/file-0007.json",
+          "size": 35840,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d67"
+          }
+        },
+        {
+          "key": "data/028/file-0008.json",
+          "size": 36864,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d68"
+          }
+        },
+        {
+          "key": "data/028/file-0009.json",
+          "size": 37888,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d69"
+          }
+        },
+        {
+          "key": "data/028/file-0010.json",
+          "size": 38912,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00006d6a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-029",
+      "region": "eu-west-1",
+      "created": "2025-06-02T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "cost_center": "CC-1029"
+      },
+      "objects": [
+        {
+          "key": "data/029/file-0001.json",
+          "size": 30720,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007149"
+          }
+        },
+        {
+          "key": "data/029/file-0002.json",
+          "size": 31744,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714a"
+          }
+        },
+        {
+          "key": "data/029/file-0003.json",
+          "size": 32768,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714b"
+          }
+        },
+        {
+          "key": "data/029/file-0004.json",
+          "size": 33792,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714c"
+          }
+        },
+        {
+          "key": "data/029/file-0005.json",
+          "size": 34816,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714d"
+          }
+        },
+        {
+          "key": "data/029/file-0006.json",
+          "size": 35840,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714e"
+          }
+        },
+        {
+          "key": "data/029/file-0007.json",
+          "size": 36864,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000714f"
+          }
+        },
+        {
+          "key": "data/029/file-0008.json",
+          "size": 37888,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007150"
+          }
+        },
+        {
+          "key": "data/029/file-0009.json",
+          "size": 38912,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007151"
+          }
+        },
+        {
+          "key": "data/029/file-0010.json",
+          "size": 39936,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007152"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-030",
+      "region": "ap-northeast-1",
+      "created": "2025-07-03T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "data",
+        "cost_center": "CC-1030"
+      },
+      "objects": [
+        {
+          "key": "data/030/file-0001.json",
+          "size": 31744,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007531"
+          }
+        },
+        {
+          "key": "data/030/file-0002.json",
+          "size": 32768,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007532"
+          }
+        },
+        {
+          "key": "data/030/file-0003.json",
+          "size": 33792,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007533"
+          }
+        },
+        {
+          "key": "data/030/file-0004.json",
+          "size": 34816,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007534"
+          }
+        },
+        {
+          "key": "data/030/file-0005.json",
+          "size": 35840,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007535"
+          }
+        },
+        {
+          "key": "data/030/file-0006.json",
+          "size": 36864,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007536"
+          }
+        },
+        {
+          "key": "data/030/file-0007.json",
+          "size": 37888,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007537"
+          }
+        },
+        {
+          "key": "data/030/file-0008.json",
+          "size": 38912,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007538"
+          }
+        },
+        {
+          "key": "data/030/file-0009.json",
+          "size": 39936,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007539"
+          }
+        },
+        {
+          "key": "data/030/file-0010.json",
+          "size": 40960,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000753a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-031",
+      "region": "us-east-1",
+      "created": "2025-08-04T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "infra",
+        "cost_center": "CC-1031"
+      },
+      "objects": [
+        {
+          "key": "data/031/file-0001.json",
+          "size": 32768,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007919"
+          }
+        },
+        {
+          "key": "data/031/file-0002.json",
+          "size": 33792,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791a"
+          }
+        },
+        {
+          "key": "data/031/file-0003.json",
+          "size": 34816,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791b"
+          }
+        },
+        {
+          "key": "data/031/file-0004.json",
+          "size": 35840,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791c"
+          }
+        },
+        {
+          "key": "data/031/file-0005.json",
+          "size": 36864,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791d"
+          }
+        },
+        {
+          "key": "data/031/file-0006.json",
+          "size": 37888,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791e"
+          }
+        },
+        {
+          "key": "data/031/file-0007.json",
+          "size": 38912,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000791f"
+          }
+        },
+        {
+          "key": "data/031/file-0008.json",
+          "size": 39936,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007920"
+          }
+        },
+        {
+          "key": "data/031/file-0009.json",
+          "size": 40960,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007921"
+          }
+        },
+        {
+          "key": "data/031/file-0010.json",
+          "size": 41984,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007922"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-032",
+      "region": "eu-west-1",
+      "created": "2025-09-05T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "cost_center": "CC-1032"
+      },
+      "objects": [
+        {
+          "key": "data/032/file-0001.json",
+          "size": 33792,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d01"
+          }
+        },
+        {
+          "key": "data/032/file-0002.json",
+          "size": 34816,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d02"
+          }
+        },
+        {
+          "key": "data/032/file-0003.json",
+          "size": 35840,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d03"
+          }
+        },
+        {
+          "key": "data/032/file-0004.json",
+          "size": 36864,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d04"
+          }
+        },
+        {
+          "key": "data/032/file-0005.json",
+          "size": 37888,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d05"
+          }
+        },
+        {
+          "key": "data/032/file-0006.json",
+          "size": 38912,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d06"
+          }
+        },
+        {
+          "key": "data/032/file-0007.json",
+          "size": 39936,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d07"
+          }
+        },
+        {
+          "key": "data/032/file-0008.json",
+          "size": 40960,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d08"
+          }
+        },
+        {
+          "key": "data/032/file-0009.json",
+          "size": 41984,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d09"
+          }
+        },
+        {
+          "key": "data/032/file-0010.json",
+          "size": 43008,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00007d0a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-033",
+      "region": "ap-northeast-1",
+      "created": "2025-10-06T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "cost_center": "CC-1033"
+      },
+      "objects": [
+        {
+          "key": "data/033/file-0001.json",
+          "size": 34816,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080e9"
+          }
+        },
+        {
+          "key": "data/033/file-0002.json",
+          "size": 35840,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080ea"
+          }
+        },
+        {
+          "key": "data/033/file-0003.json",
+          "size": 36864,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080eb"
+          }
+        },
+        {
+          "key": "data/033/file-0004.json",
+          "size": 37888,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080ec"
+          }
+        },
+        {
+          "key": "data/033/file-0005.json",
+          "size": 38912,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080ed"
+          }
+        },
+        {
+          "key": "data/033/file-0006.json",
+          "size": 39936,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080ee"
+          }
+        },
+        {
+          "key": "data/033/file-0007.json",
+          "size": 40960,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080ef"
+          }
+        },
+        {
+          "key": "data/033/file-0008.json",
+          "size": 41984,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080f0"
+          }
+        },
+        {
+          "key": "data/033/file-0009.json",
+          "size": 43008,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080f1"
+          }
+        },
+        {
+          "key": "data/033/file-0010.json",
+          "size": 44032,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000080f2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-034",
+      "region": "us-east-1",
+      "created": "2025-11-07T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "data",
+        "cost_center": "CC-1034"
+      },
+      "objects": [
+        {
+          "key": "data/034/file-0001.json",
+          "size": 35840,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d1"
+          }
+        },
+        {
+          "key": "data/034/file-0002.json",
+          "size": 36864,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d2"
+          }
+        },
+        {
+          "key": "data/034/file-0003.json",
+          "size": 37888,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d3"
+          }
+        },
+        {
+          "key": "data/034/file-0004.json",
+          "size": 38912,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d4"
+          }
+        },
+        {
+          "key": "data/034/file-0005.json",
+          "size": 39936,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d5"
+          }
+        },
+        {
+          "key": "data/034/file-0006.json",
+          "size": 40960,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d6"
+          }
+        },
+        {
+          "key": "data/034/file-0007.json",
+          "size": 41984,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d7"
+          }
+        },
+        {
+          "key": "data/034/file-0008.json",
+          "size": 43008,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d8"
+          }
+        },
+        {
+          "key": "data/034/file-0009.json",
+          "size": 44032,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084d9"
+          }
+        },
+        {
+          "key": "data/034/file-0010.json",
+          "size": 45056,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000084da"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-035",
+      "region": "eu-west-1",
+      "created": "2025-12-08T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "infra",
+        "cost_center": "CC-1035"
+      },
+      "objects": [
+        {
+          "key": "data/035/file-0001.json",
+          "size": 36864,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088b9"
+          }
+        },
+        {
+          "key": "data/035/file-0002.json",
+          "size": 37888,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088ba"
+          }
+        },
+        {
+          "key": "data/035/file-0003.json",
+          "size": 38912,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088bb"
+          }
+        },
+        {
+          "key": "data/035/file-0004.json",
+          "size": 39936,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088bc"
+          }
+        },
+        {
+          "key": "data/035/file-0005.json",
+          "size": 40960,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088bd"
+          }
+        },
+        {
+          "key": "data/035/file-0006.json",
+          "size": 41984,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088be"
+          }
+        },
+        {
+          "key": "data/035/file-0007.json",
+          "size": 43008,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088bf"
+          }
+        },
+        {
+          "key": "data/035/file-0008.json",
+          "size": 44032,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088c0"
+          }
+        },
+        {
+          "key": "data/035/file-0009.json",
+          "size": 45056,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088c1"
+          }
+        },
+        {
+          "key": "data/035/file-0010.json",
+          "size": 46080,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:000088c2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-036",
+      "region": "ap-northeast-1",
+      "created": "2025-01-09T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "cost_center": "CC-1036"
+      },
+      "objects": [
+        {
+          "key": "data/036/file-0001.json",
+          "size": 37888,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca1"
+          }
+        },
+        {
+          "key": "data/036/file-0002.json",
+          "size": 38912,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca2"
+          }
+        },
+        {
+          "key": "data/036/file-0003.json",
+          "size": 39936,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca3"
+          }
+        },
+        {
+          "key": "data/036/file-0004.json",
+          "size": 40960,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca4"
+          }
+        },
+        {
+          "key": "data/036/file-0005.json",
+          "size": 41984,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca5"
+          }
+        },
+        {
+          "key": "data/036/file-0006.json",
+          "size": 43008,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca6"
+          }
+        },
+        {
+          "key": "data/036/file-0007.json",
+          "size": 44032,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca7"
+          }
+        },
+        {
+          "key": "data/036/file-0008.json",
+          "size": 45056,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca8"
+          }
+        },
+        {
+          "key": "data/036/file-0009.json",
+          "size": 46080,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008ca9"
+          }
+        },
+        {
+          "key": "data/036/file-0010.json",
+          "size": 47104,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00008caa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-037",
+      "region": "us-east-1",
+      "created": "2025-02-10T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "cost_center": "CC-1037"
+      },
+      "objects": [
+        {
+          "key": "data/037/file-0001.json",
+          "size": 38912,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009089"
+          }
+        },
+        {
+          "key": "data/037/file-0002.json",
+          "size": 39936,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908a"
+          }
+        },
+        {
+          "key": "data/037/file-0003.json",
+          "size": 40960,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908b"
+          }
+        },
+        {
+          "key": "data/037/file-0004.json",
+          "size": 41984,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908c"
+          }
+        },
+        {
+          "key": "data/037/file-0005.json",
+          "size": 43008,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908d"
+          }
+        },
+        {
+          "key": "data/037/file-0006.json",
+          "size": 44032,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908e"
+          }
+        },
+        {
+          "key": "data/037/file-0007.json",
+          "size": 45056,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000908f"
+          }
+        },
+        {
+          "key": "data/037/file-0008.json",
+          "size": 46080,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009090"
+          }
+        },
+        {
+          "key": "data/037/file-0009.json",
+          "size": 47104,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009091"
+          }
+        },
+        {
+          "key": "data/037/file-0010.json",
+          "size": 48128,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009092"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-038",
+      "region": "eu-west-1",
+      "created": "2025-03-11T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "data",
+        "cost_center": "CC-1038"
+      },
+      "objects": [
+        {
+          "key": "data/038/file-0001.json",
+          "size": 39936,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009471"
+          }
+        },
+        {
+          "key": "data/038/file-0002.json",
+          "size": 40960,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009472"
+          }
+        },
+        {
+          "key": "data/038/file-0003.json",
+          "size": 41984,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009473"
+          }
+        },
+        {
+          "key": "data/038/file-0004.json",
+          "size": 43008,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009474"
+          }
+        },
+        {
+          "key": "data/038/file-0005.json",
+          "size": 44032,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009475"
+          }
+        },
+        {
+          "key": "data/038/file-0006.json",
+          "size": 45056,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009476"
+          }
+        },
+        {
+          "key": "data/038/file-0007.json",
+          "size": 46080,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009477"
+          }
+        },
+        {
+          "key": "data/038/file-0008.json",
+          "size": 47104,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009478"
+          }
+        },
+        {
+          "key": "data/038/file-0009.json",
+          "size": 48128,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009479"
+          }
+        },
+        {
+          "key": "data/038/file-0010.json",
+          "size": 49152,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000947a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-039",
+      "region": "ap-northeast-1",
+      "created": "2025-04-12T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "infra",
+        "cost_center": "CC-1039"
+      },
+      "objects": [
+        {
+          "key": "data/039/file-0001.json",
+          "size": 40960,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009859"
+          }
+        },
+        {
+          "key": "data/039/file-0002.json",
+          "size": 41984,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985a"
+          }
+        },
+        {
+          "key": "data/039/file-0003.json",
+          "size": 43008,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985b"
+          }
+        },
+        {
+          "key": "data/039/file-0004.json",
+          "size": 44032,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985c"
+          }
+        },
+        {
+          "key": "data/039/file-0005.json",
+          "size": 45056,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985d"
+          }
+        },
+        {
+          "key": "data/039/file-0006.json",
+          "size": 46080,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985e"
+          }
+        },
+        {
+          "key": "data/039/file-0007.json",
+          "size": 47104,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000985f"
+          }
+        },
+        {
+          "key": "data/039/file-0008.json",
+          "size": 48128,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009860"
+          }
+        },
+        {
+          "key": "data/039/file-0009.json",
+          "size": 49152,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009861"
+          }
+        },
+        {
+          "key": "data/039/file-0010.json",
+          "size": 50176,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009862"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-040",
+      "region": "us-east-1",
+      "created": "2025-05-13T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "cost_center": "CC-1040"
+      },
+      "objects": [
+        {
+          "key": "data/040/file-0001.json",
+          "size": 41984,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c41"
+          }
+        },
+        {
+          "key": "data/040/file-0002.json",
+          "size": 43008,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c42"
+          }
+        },
+        {
+          "key": "data/040/file-0003.json",
+          "size": 44032,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c43"
+          }
+        },
+        {
+          "key": "data/040/file-0004.json",
+          "size": 45056,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c44"
+          }
+        },
+        {
+          "key": "data/040/file-0005.json",
+          "size": 46080,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c45"
+          }
+        },
+        {
+          "key": "data/040/file-0006.json",
+          "size": 47104,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c46"
+          }
+        },
+        {
+          "key": "data/040/file-0007.json",
+          "size": 48128,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c47"
+          }
+        },
+        {
+          "key": "data/040/file-0008.json",
+          "size": 49152,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c48"
+          }
+        },
+        {
+          "key": "data/040/file-0009.json",
+          "size": 50176,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c49"
+          }
+        },
+        {
+          "key": "data/040/file-0010.json",
+          "size": 51200,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:00009c4a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-041",
+      "region": "eu-west-1",
+      "created": "2025-06-14T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "cost_center": "CC-1041"
+      },
+      "objects": [
+        {
+          "key": "data/041/file-0001.json",
+          "size": 43008,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a029"
+          }
+        },
+        {
+          "key": "data/041/file-0002.json",
+          "size": 44032,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02a"
+          }
+        },
+        {
+          "key": "data/041/file-0003.json",
+          "size": 45056,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02b"
+          }
+        },
+        {
+          "key": "data/041/file-0004.json",
+          "size": 46080,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02c"
+          }
+        },
+        {
+          "key": "data/041/file-0005.json",
+          "size": 47104,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02d"
+          }
+        },
+        {
+          "key": "data/041/file-0006.json",
+          "size": 48128,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02e"
+          }
+        },
+        {
+          "key": "data/041/file-0007.json",
+          "size": 49152,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a02f"
+          }
+        },
+        {
+          "key": "data/041/file-0008.json",
+          "size": 50176,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a030"
+          }
+        },
+        {
+          "key": "data/041/file-0009.json",
+          "size": 51200,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a031"
+          }
+        },
+        {
+          "key": "data/041/file-0010.json",
+          "size": 52224,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a032"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-042",
+      "region": "ap-northeast-1",
+      "created": "2025-07-15T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "data",
+        "cost_center": "CC-1042"
+      },
+      "objects": [
+        {
+          "key": "data/042/file-0001.json",
+          "size": 44032,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a411"
+          }
+        },
+        {
+          "key": "data/042/file-0002.json",
+          "size": 45056,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a412"
+          }
+        },
+        {
+          "key": "data/042/file-0003.json",
+          "size": 46080,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a413"
+          }
+        },
+        {
+          "key": "data/042/file-0004.json",
+          "size": 47104,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a414"
+          }
+        },
+        {
+          "key": "data/042/file-0005.json",
+          "size": 48128,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a415"
+          }
+        },
+        {
+          "key": "data/042/file-0006.json",
+          "size": 49152,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a416"
+          }
+        },
+        {
+          "key": "data/042/file-0007.json",
+          "size": 50176,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a417"
+          }
+        },
+        {
+          "key": "data/042/file-0008.json",
+          "size": 51200,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a418"
+          }
+        },
+        {
+          "key": "data/042/file-0009.json",
+          "size": 52224,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a419"
+          }
+        },
+        {
+          "key": "data/042/file-0010.json",
+          "size": 53248,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a41a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-043",
+      "region": "us-east-1",
+      "created": "2025-08-16T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "infra",
+        "cost_center": "CC-1043"
+      },
+      "objects": [
+        {
+          "key": "data/043/file-0001.json",
+          "size": 45056,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7f9"
+          }
+        },
+        {
+          "key": "data/043/file-0002.json",
+          "size": 46080,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7fa"
+          }
+        },
+        {
+          "key": "data/043/file-0003.json",
+          "size": 47104,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7fb"
+          }
+        },
+        {
+          "key": "data/043/file-0004.json",
+          "size": 48128,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7fc"
+          }
+        },
+        {
+          "key": "data/043/file-0005.json",
+          "size": 49152,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7fd"
+          }
+        },
+        {
+          "key": "data/043/file-0006.json",
+          "size": 50176,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7fe"
+          }
+        },
+        {
+          "key": "data/043/file-0007.json",
+          "size": 51200,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a7ff"
+          }
+        },
+        {
+          "key": "data/043/file-0008.json",
+          "size": 52224,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a800"
+          }
+        },
+        {
+          "key": "data/043/file-0009.json",
+          "size": 53248,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a801"
+          }
+        },
+        {
+          "key": "data/043/file-0010.json",
+          "size": 54272,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000a802"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-044",
+      "region": "eu-west-1",
+      "created": "2025-09-17T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "cost_center": "CC-1044"
+      },
+      "objects": [
+        {
+          "key": "data/044/file-0001.json",
+          "size": 46080,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe1"
+          }
+        },
+        {
+          "key": "data/044/file-0002.json",
+          "size": 47104,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe2"
+          }
+        },
+        {
+          "key": "data/044/file-0003.json",
+          "size": 48128,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe3"
+          }
+        },
+        {
+          "key": "data/044/file-0004.json",
+          "size": 49152,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe4"
+          }
+        },
+        {
+          "key": "data/044/file-0005.json",
+          "size": 50176,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe5"
+          }
+        },
+        {
+          "key": "data/044/file-0006.json",
+          "size": 51200,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe6"
+          }
+        },
+        {
+          "key": "data/044/file-0007.json",
+          "size": 52224,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe7"
+          }
+        },
+        {
+          "key": "data/044/file-0008.json",
+          "size": 53248,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe8"
+          }
+        },
+        {
+          "key": "data/044/file-0009.json",
+          "size": 54272,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abe9"
+          }
+        },
+        {
+          "key": "data/044/file-0010.json",
+          "size": 55296,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000abea"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-045",
+      "region": "ap-northeast-1",
+      "created": "2025-10-18T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "cost_center": "CC-1045"
+      },
+      "objects": [
+        {
+          "key": "data/045/file-0001.json",
+          "size": 47104,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afc9"
+          }
+        },
+        {
+          "key": "data/045/file-0002.json",
+          "size": 48128,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afca"
+          }
+        },
+        {
+          "key": "data/045/file-0003.json",
+          "size": 49152,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afcb"
+          }
+        },
+        {
+          "key": "data/045/file-0004.json",
+          "size": 50176,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afcc"
+          }
+        },
+        {
+          "key": "data/045/file-0005.json",
+          "size": 51200,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afcd"
+          }
+        },
+        {
+          "key": "data/045/file-0006.json",
+          "size": 52224,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afce"
+          }
+        },
+        {
+          "key": "data/045/file-0007.json",
+          "size": 53248,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afcf"
+          }
+        },
+        {
+          "key": "data/045/file-0008.json",
+          "size": 54272,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afd0"
+          }
+        },
+        {
+          "key": "data/045/file-0009.json",
+          "size": 55296,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afd1"
+          }
+        },
+        {
+          "key": "data/045/file-0010.json",
+          "size": 56320,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000afd2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-046",
+      "region": "us-east-1",
+      "created": "2025-11-19T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "data",
+        "cost_center": "CC-1046"
+      },
+      "objects": [
+        {
+          "key": "data/046/file-0001.json",
+          "size": 48128,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b1"
+          }
+        },
+        {
+          "key": "data/046/file-0002.json",
+          "size": 49152,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b2"
+          }
+        },
+        {
+          "key": "data/046/file-0003.json",
+          "size": 50176,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b3"
+          }
+        },
+        {
+          "key": "data/046/file-0004.json",
+          "size": 51200,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b4"
+          }
+        },
+        {
+          "key": "data/046/file-0005.json",
+          "size": 52224,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b5"
+          }
+        },
+        {
+          "key": "data/046/file-0006.json",
+          "size": 53248,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b6"
+          }
+        },
+        {
+          "key": "data/046/file-0007.json",
+          "size": 54272,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b7"
+          }
+        },
+        {
+          "key": "data/046/file-0008.json",
+          "size": 55296,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b8"
+          }
+        },
+        {
+          "key": "data/046/file-0009.json",
+          "size": 56320,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3b9"
+          }
+        },
+        {
+          "key": "data/046/file-0010.json",
+          "size": 57344,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b3ba"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-047",
+      "region": "eu-west-1",
+      "created": "2025-12-20T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "infra",
+        "cost_center": "CC-1047"
+      },
+      "objects": [
+        {
+          "key": "data/047/file-0001.json",
+          "size": 49152,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b799"
+          }
+        },
+        {
+          "key": "data/047/file-0002.json",
+          "size": 50176,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79a"
+          }
+        },
+        {
+          "key": "data/047/file-0003.json",
+          "size": 51200,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79b"
+          }
+        },
+        {
+          "key": "data/047/file-0004.json",
+          "size": 52224,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79c"
+          }
+        },
+        {
+          "key": "data/047/file-0005.json",
+          "size": 53248,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79d"
+          }
+        },
+        {
+          "key": "data/047/file-0006.json",
+          "size": 54272,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79e"
+          }
+        },
+        {
+          "key": "data/047/file-0007.json",
+          "size": 55296,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b79f"
+          }
+        },
+        {
+          "key": "data/047/file-0008.json",
+          "size": 56320,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b7a0"
+          }
+        },
+        {
+          "key": "data/047/file-0009.json",
+          "size": 57344,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b7a1"
+          }
+        },
+        {
+          "key": "data/047/file-0010.json",
+          "size": 58368,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000b7a2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-048",
+      "region": "ap-northeast-1",
+      "created": "2025-01-21T00:00:00Z",
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "cost_center": "CC-1048"
+      },
+      "objects": [
+        {
+          "key": "data/048/file-0001.json",
+          "size": 50176,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb81"
+          }
+        },
+        {
+          "key": "data/048/file-0002.json",
+          "size": 51200,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb82"
+          }
+        },
+        {
+          "key": "data/048/file-0003.json",
+          "size": 52224,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb83"
+          }
+        },
+        {
+          "key": "data/048/file-0004.json",
+          "size": 53248,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb84"
+          }
+        },
+        {
+          "key": "data/048/file-0005.json",
+          "size": 54272,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb85"
+          }
+        },
+        {
+          "key": "data/048/file-0006.json",
+          "size": 55296,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb86"
+          }
+        },
+        {
+          "key": "data/048/file-0007.json",
+          "size": 56320,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb87"
+          }
+        },
+        {
+          "key": "data/048/file-0008.json",
+          "size": 57344,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb88"
+          }
+        },
+        {
+          "key": "data/048/file-0009.json",
+          "size": 58368,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb89"
+          }
+        },
+        {
+          "key": "data/048/file-0010.json",
+          "size": 59392,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bb8a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-049",
+      "region": "us-east-1",
+      "created": "2025-02-22T00:00:00Z",
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "cost_center": "CC-1049"
+      },
+      "objects": [
+        {
+          "key": "data/049/file-0001.json",
+          "size": 51200,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf69"
+          }
+        },
+        {
+          "key": "data/049/file-0002.json",
+          "size": 52224,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6a"
+          }
+        },
+        {
+          "key": "data/049/file-0003.json",
+          "size": 53248,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6b"
+          }
+        },
+        {
+          "key": "data/049/file-0004.json",
+          "size": 54272,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6c"
+          }
+        },
+        {
+          "key": "data/049/file-0005.json",
+          "size": 55296,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6d"
+          }
+        },
+        {
+          "key": "data/049/file-0006.json",
+          "size": 56320,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6e"
+          }
+        },
+        {
+          "key": "data/049/file-0007.json",
+          "size": 57344,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf6f"
+          }
+        },
+        {
+          "key": "data/049/file-0008.json",
+          "size": 58368,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf70"
+          }
+        },
+        {
+          "key": "data/049/file-0009.json",
+          "size": 59392,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf71"
+          }
+        },
+        {
+          "key": "data/049/file-0010.json",
+          "size": 60416,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000bf72"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sample-bucket-050",
+      "region": "eu-west-1",
+      "created": "2025-03-23T00:00:00Z",
+      "tags": {
+        "environment": "development",
+        "team": "data",
+        "cost_center": "CC-1050"
+      },
+      "objects": [
+        {
+          "key": "data/050/file-0001.json",
+          "size": 52224,
+          "last_modified": "2025-03-02T12:01:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c351"
+          }
+        },
+        {
+          "key": "data/050/file-0002.json",
+          "size": 53248,
+          "last_modified": "2025-03-03T12:02:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c352"
+          }
+        },
+        {
+          "key": "data/050/file-0003.json",
+          "size": 54272,
+          "last_modified": "2025-03-04T12:03:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c353"
+          }
+        },
+        {
+          "key": "data/050/file-0004.json",
+          "size": 55296,
+          "last_modified": "2025-03-05T12:04:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c354"
+          }
+        },
+        {
+          "key": "data/050/file-0005.json",
+          "size": 56320,
+          "last_modified": "2025-03-06T12:05:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c355"
+          }
+        },
+        {
+          "key": "data/050/file-0006.json",
+          "size": 57344,
+          "last_modified": "2025-03-07T12:06:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c356"
+          }
+        },
+        {
+          "key": "data/050/file-0007.json",
+          "size": 58368,
+          "last_modified": "2025-03-08T12:07:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c357"
+          }
+        },
+        {
+          "key": "data/050/file-0008.json",
+          "size": 59392,
+          "last_modified": "2025-03-09T12:08:00Z",
+          "storage_class": "GLACIER",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c358"
+          }
+        },
+        {
+          "key": "data/050/file-0009.json",
+          "size": 60416,
+          "last_modified": "2025-03-10T12:09:00Z",
+          "storage_class": "STANDARD",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c359"
+          }
+        },
+        {
+          "key": "data/050/file-0010.json",
+          "size": 61440,
+          "last_modified": "2025-03-11T12:10:00Z",
+          "storage_class": "INTELLIGENT_TIERING",
+          "metadata": {
+            "content_type": "application/json",
+            "checksum": "sha256:0000c35a"
+          }
+        }
+      ]
+    }
+  ]
+}
