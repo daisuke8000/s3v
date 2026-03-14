@@ -7,7 +7,6 @@ use ratatui::{
 };
 
 use crate::app::{App, Mode};
-use crate::s3::{S3Item, S3Path};
 
 use super::theme::theme;
 
@@ -21,16 +20,7 @@ pub fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
 
     // URL バー
     let url = if let Some(item) = app.selected_item() {
-        let path = match item {
-            S3Item::Bucket { name } => S3Path::bucket(name),
-            S3Item::Folder { prefix, .. } => {
-                S3Path::with_prefix(app.current_path.bucket.clone().unwrap_or_default(), prefix)
-            }
-            S3Item::File { key, .. } => {
-                S3Path::with_prefix(app.current_path.bucket.clone().unwrap_or_default(), key)
-            }
-        };
-        path.to_s3_uri()
+        app.item_to_s3_path(item).to_s3_uri()
     } else {
         app.current_path.to_s3_uri()
     };
@@ -99,6 +89,10 @@ fn build_help_line(app: &App) -> Line<'static> {
             Span::styled(" All  ", Style::default().fg(t.help_fg)),
             Span::styled("d", Style::default().fg(t.help_key_fg)),
             Span::styled(" DL  ", Style::default().fg(t.help_fg)),
+            Span::styled("y", Style::default().fg(t.help_key_fg)),
+            Span::styled("/", Style::default().fg(t.separator_fg)),
+            Span::styled("Y", Style::default().fg(t.help_key_fg)),
+            Span::styled(" Copy  ", Style::default().fg(t.help_fg)),
             Span::styled("/", Style::default().fg(t.help_key_fg)),
             Span::styled(" Filter  ", Style::default().fg(t.help_fg)),
             Span::styled("?", Style::default().fg(t.help_key_fg)),

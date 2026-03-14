@@ -54,4 +54,6 @@ pub enum Command {
     PrefetchPreview { bucket: String, key: String },
     /// 現在のプレビュー読み込みをキャンセル
     CancelPreview,
+    /// テキストをクリップボードにコピー
+    CopyToClipboard(String),
 }

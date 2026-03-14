@@ -66,14 +66,14 @@ impl App {
         match item {
             S3Item::Bucket { ref name } => self.navigate_to(S3Path::bucket(name)),
             S3Item::Folder { ref prefix, .. } => {
-                let bucket = self.current_path.bucket.clone().unwrap_or_default();
+                let bucket = self.current_bucket();
                 self.navigate_to(S3Path::with_prefix(bucket, prefix))
             }
             S3Item::File {
                 ref key, ref name, ..
             } => {
                 if crate::preview::is_previewable_file(name) {
-                    let bucket = self.current_path.bucket.clone().unwrap_or_default();
+                    let bucket = self.current_bucket();
                     (
                         Self {
                             mode: Mode::Loading,

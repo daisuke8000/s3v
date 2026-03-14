@@ -28,6 +28,28 @@ pub enum Mode {
     Downloading,
 }
 
+impl Mode {
+    /// テキスト入力を処理するモードか（q で終了しない）
+    pub fn requires_raw_key_input(&self) -> bool {
+        matches!(
+            self,
+            Mode::Filter | Mode::PreviewFocus | Mode::Search | Mode::DownloadConfirm
+        )
+    }
+
+    /// プレビュー状態を維持すべきモードか
+    pub fn preserves_preview(&self) -> bool {
+        matches!(
+            self,
+            Mode::PreviewFocus
+                | Mode::Normal
+                | Mode::Loading
+                | Mode::DownloadConfirm
+                | Mode::Downloading
+        )
+    }
+}
+
 /// バナー表示状態
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum BannerState {
@@ -76,6 +98,8 @@ pub struct App {
     pub indexing_in_progress: bool,
     /// インデックス構築済みオブジェクト数（進捗表示用）
     pub indexing_count: usize,
+    /// AWS リージョン（HTTPS URL 生成に使用）
+    pub region: String,
     /// エラーメッセージ（UI に表示）
     pub error_message: Option<String>,
     /// 成功メッセージ（UI に表示）
@@ -146,6 +170,7 @@ impl App {
             has_more: false,
             indexing_in_progress: false,
             indexing_count: 0,
+            region: String::new(),
             error_message: None,
             status_message: None,
             parent_items: Vec::new(),
@@ -196,12 +221,7 @@ impl App {
                 vec![],
             ),
             Event::PreviewLoaded(content) => {
-                // Enter キー経由（Loading）なら PreviewFocus、自動プレビューなら現モード維持
-                let mode = if self.mode == Mode::Loading {
-                    Mode::PreviewFocus
-                } else {
-                    self.mode.clone()
-                };
+                let mode = self.mode_after_preview_load();
                 (
                     Self {
                         preview_content: Some(content),
@@ -258,12 +278,7 @@ impl App {
                         _ => String::new(),
                     },
                 };
-                // Enter キー経由（Loading）なら PreviewFocus、自動プレビューなら現モード維持
-                let mode = if self.mode == Mode::Loading {
-                    Mode::PreviewFocus
-                } else {
-                    self.mode.clone()
-                };
+                let mode = self.mode_after_preview_load();
                 (
                     Self {
                         preview_content: Some(PreviewContent::Text(content)),
@@ -282,12 +297,7 @@ impl App {
                 vec![],
             ),
             Event::PreviewImageReady => {
-                // Enter キー経由（Loading）なら PreviewFocus、自動プレビューなら現モード維持
-                let mode = if self.mode == Mode::Loading {
-                    Mode::PreviewFocus
-                } else {
-                    self.mode.clone()
-                };
+                let mode = self.mode_after_preview_load();
                 (
                     Self {
                         preview_content: Some(PreviewContent::Image),
@@ -449,6 +459,21 @@ impl App {
     /// 選択中のアイテムを返す
     pub fn selected_item(&self) -> Option<&S3Item> {
         self.items.get(self.cursor)
+    }
+
+    /// 現在のバケット名を取得（未選択時は空文字列）
+    pub fn current_bucket(&self) -> String {
+        self.current_path.bucket.clone().unwrap_or_default()
+    }
+
+    /// プレビュー読み込み完了後のモードを決定
+    /// Enter キー経由（Loading）なら PreviewFocus、自動プレビューなら現モード維持
+    fn mode_after_preview_load(&self) -> Mode {
+        if self.mode == Mode::Loading {
+            Mode::PreviewFocus
+        } else {
+            self.mode.clone()
+        }
     }
 
     /// 親ペイン内で現在パスに対応する位置を算出

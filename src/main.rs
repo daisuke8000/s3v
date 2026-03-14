@@ -67,6 +67,8 @@ impl DebounceState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    s3v::logging::init_logging()?;
+
     let cli = Cli::parse();
 
     // AWS SDK 設定
@@ -96,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
 
     let s3_config = s3_config_builder.build();
     let s3_sdk_client = aws_sdk_s3::Client::from_conf(s3_config);
-    let s3_client = S3Client::new(s3_sdk_client, region);
+    let s3_client = S3Client::new(s3_sdk_client, region.clone());
 
     // Terminal 初期化
     enable_raw_mode()?;
@@ -112,6 +114,7 @@ async fn main() -> anyhow::Result<()> {
     let initial_path = cli.initial_path();
     let mut app = App::new();
     app.current_path = initial_path.clone();
+    app.region = region.clone();
 
     // バナー描画（初期ロード前に1フレーム描画）
     terminal.draw(|f| s3v::ui::render(&app, f, None))?;
@@ -157,9 +160,12 @@ async fn run_app(
     picker: &mut Picker,
 ) -> anyhow::Result<()> {
     let mut preview = PreviewState::new();
-    let mut metadata_index: Option<Arc<s3v::search::MetadataIndex>> = None;
-    let mut indexing_prefix: Option<String> = None;
-    let mut debounce = DebounceState::new();
+    let mut ctx = CommandContext {
+        metadata_index: None,
+        indexing_prefix: None,
+        debounce: DebounceState::new(),
+        runtime: s3v::runtime::RuntimeState::new(),
+    };
 
     // ストリーミングイベント用チャネル
     let (stream_tx, mut stream_rx) = mpsc::unbounded_channel::<Event>();
@@ -168,8 +174,21 @@ async fn run_app(
     let mut event_stream = EventStream::new();
 
     loop {
-        // PDF ページ変更検知 → 再レンダリング
-        update_pdf_page(app, &mut preview, picker).await;
+        // メッセージの自動消去チェック（3秒後）
+        if ctx.runtime.should_dismiss_error() {
+            app.error_message = None;
+        }
+        if ctx.runtime.should_dismiss_status() {
+            app.status_message = None;
+        }
+
+        // PDF ページ変更検知 → 再レンダリング（PDF 表示中のみ）
+        if matches!(
+            app.preview_content,
+            Some(s3v::preview::PreviewContent::Pdf { .. })
+        ) {
+            update_pdf_page(app, &mut preview, picker).await;
+        }
 
         // 描画
         terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
@@ -187,10 +206,10 @@ async fn run_app(
                 }
                 // DebounceTimeout: デバウンスキーが一致すればプレビュー開始
                 if let Event::DebounceTimeout { ref debounce_key } = stream_event
-                    && debounce.pending_key.as_deref() == Some(debounce_key)
+                    && ctx.debounce.pending_key.as_deref() == Some(debounce_key)
                 {
-                    let bucket = debounce.pending_bucket.clone();
-                    let obj_key = debounce.pending_obj_key.clone();
+                    let bucket = ctx.debounce.pending_bucket.clone();
+                    let obj_key = ctx.debounce.pending_obj_key.clone();
                     let dk = debounce_key.clone();
                     start_debounced_preview(
                         app, s3_client, &mut preview,
@@ -202,10 +221,10 @@ async fn run_app(
                     &stream_event,
                     Event::MetadataIndexed(_) | Event::Error(_)
                 ) {
-                    indexing_prefix = None;
+                    ctx.indexing_prefix = None;
                 }
                 let cmds = dispatch_event(app, stream_event);
-                handle_commands(app, s3_client, &mut preview, &mut metadata_index, &mut indexing_prefix, &stream_tx, &mut debounce, cmds).await?;
+                handle_commands(app, s3_client, &mut preview, &mut ctx, &stream_tx, cmds).await?;
             }
             Some(Ok(crossterm_event)) = event_stream.next() => {
                 if let crossterm::event::Event::Key(key) = crossterm_event {
@@ -213,22 +232,15 @@ async fn run_app(
                         continue;
                     }
 
-                    let event = match app.mode {
-                        s3v::Mode::Filter
-                        | s3v::Mode::PreviewFocus
-                        | s3v::Mode::Search
-                        | s3v::Mode::DownloadConfirm => Event::Key(key),
-                        _ => Event::from_key(key),
+                    let event = if app.mode.requires_raw_key_input() {
+                        Event::Key(key)
+                    } else {
+                        Event::from_key(key)
                     };
                     let cmds = dispatch_event(app, event);
 
-                    // PreviewFocus モードを抜けたらプレビュー状態をクリア
-                    if app.mode != s3v::Mode::PreviewFocus
-                        && app.mode != s3v::Mode::Normal
-                        && app.mode != s3v::Mode::Loading
-                        && app.mode != s3v::Mode::DownloadConfirm
-                        && app.mode != s3v::Mode::Downloading
-                    {
+                    // プレビューを維持しないモードに遷移したらクリア
+                    if !app.mode.preserves_preview() {
                         preview.clear();
                     }
 
@@ -237,7 +249,7 @@ async fn run_app(
                         terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
                     }
 
-                    handle_commands(app, s3_client, &mut preview, &mut metadata_index, &mut indexing_prefix, &stream_tx, &mut debounce, cmds).await?;
+                    handle_commands(app, s3_client, &mut preview, &mut ctx, &stream_tx, cmds).await?;
                 }
             }
         }
@@ -250,43 +262,35 @@ async fn run_app(
     Ok(())
 }
 
+/// コマンド実行に必要なランタイムコンテキスト
+struct CommandContext {
+    metadata_index: Option<Arc<s3v::search::MetadataIndex>>,
+    indexing_prefix: Option<String>,
+    debounce: DebounceState,
+    runtime: s3v::runtime::RuntimeState,
+}
+
 /// コマンド実行（副作用はここで処理）
-#[allow(clippy::too_many_arguments)]
 async fn handle_commands(
     app: &mut App,
     s3_client: &S3Client,
     preview: &mut PreviewState,
-    metadata_index: &mut Option<Arc<s3v::search::MetadataIndex>>,
-    indexing_prefix: &mut Option<String>,
+    ctx: &mut CommandContext,
     stream_tx: &mpsc::UnboundedSender<Event>,
-    debounce: &mut DebounceState,
     cmds: Vec<Command>,
 ) -> anyhow::Result<()> {
     for cmd in cmds {
-        handle_single_command(
-            app,
-            s3_client,
-            preview,
-            metadata_index,
-            indexing_prefix,
-            stream_tx,
-            debounce,
-            cmd,
-        )
-        .await?;
+        handle_single_command(app, s3_client, preview, ctx, stream_tx, cmd).await?;
     }
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn handle_single_command<'a>(
     app: &'a mut App,
     s3_client: &'a S3Client,
     preview: &'a mut PreviewState,
-    metadata_index: &'a mut Option<Arc<s3v::search::MetadataIndex>>,
-    indexing_prefix: &'a mut Option<String>,
+    ctx: &'a mut CommandContext,
     stream_tx: &'a mpsc::UnboundedSender<Event>,
-    debounce: &'a mut DebounceState,
     cmd: Command,
 ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + 'a>> {
     Box::pin(async move {
@@ -414,14 +418,7 @@ fn handle_single_command<'a>(
                         };
                         for auto_cmd in auto_cmds {
                             handle_single_command(
-                                app,
-                                s3_client,
-                                preview,
-                                metadata_index,
-                                indexing_prefix,
-                                stream_tx,
-                                debounce,
-                                auto_cmd,
+                                app, s3_client, preview, ctx, stream_tx, auto_cmd,
                             )
                             .await?;
                         }
@@ -477,7 +474,8 @@ fn handle_single_command<'a>(
             } => {
                 // デバウンスタイマーを設定（bucket/key も保存）
                 let tx = stream_tx.clone();
-                debounce.schedule(debounce_key.clone(), bucket, key.clone(), tx);
+                ctx.debounce
+                    .schedule(debounce_key.clone(), bucket, key.clone(), tx);
 
                 app.pending_preview_key = Some(debounce_key);
 
@@ -493,17 +491,27 @@ fn handle_single_command<'a>(
                 preview.cancel_stream();
                 app.pending_preview_key = None;
             }
+            Command::CopyToClipboard(text) => match s3v::clipboard::copy_to_clipboard(&text) {
+                Ok(()) => {
+                    app.status_message = Some("Copied to clipboard".to_string());
+                    ctx.runtime.mark_status_shown();
+                }
+                Err(e) => {
+                    app.error_message = Some(format!("Clipboard: {}", e));
+                    ctx.runtime.mark_error_shown();
+                }
+            },
             Command::IndexMetadata { bucket, prefix } => {
                 // 重複チェック: 同じ prefix が構築中なら無視
-                if indexing_prefix.as_deref() == Some(&prefix) {
+                if ctx.indexing_prefix.as_deref() == Some(&prefix) {
                     return Ok(());
                 }
 
                 // MetadataIndex が未初期化なら開く
-                if metadata_index.is_none() {
+                if ctx.metadata_index.is_none() {
                     match s3v::search::MetadataIndex::open(&bucket) {
                         Ok(index) => {
-                            *metadata_index = Some(Arc::new(index));
+                            ctx.metadata_index = Some(Arc::new(index));
                         }
                         Err(e) => {
                             dispatch_event(
@@ -514,7 +522,7 @@ fn handle_single_command<'a>(
                         }
                     }
                 }
-                let index = metadata_index.clone().expect("index initialized above");
+                let index = ctx.metadata_index.clone().expect("index initialized above");
 
                 // 既にカバー済みなら構築不要
                 if index.is_prefix_covered(&prefix).unwrap_or(false) {
@@ -522,7 +530,7 @@ fn handle_single_command<'a>(
                     return Ok(());
                 }
 
-                *indexing_prefix = Some(prefix.clone());
+                ctx.indexing_prefix = Some(prefix.clone());
                 let s3_client = s3_client.clone();
                 let tx = stream_tx.clone();
                 tokio::spawn(async move {
@@ -601,7 +609,7 @@ fn handle_single_command<'a>(
                 });
             }
             Command::ExecuteSearch(where_clause) => {
-                if let Some(index) = metadata_index.clone() {
+                if let Some(index) = ctx.metadata_index.clone() {
                     let prefix = app.current_path.prefix.clone();
                     let tx = stream_tx.clone();
                     tokio::spawn(async move {

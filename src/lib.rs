@@ -1,11 +1,14 @@
 pub mod app;
 pub mod cli;
+pub mod clipboard;
 pub mod command;
 pub mod command_handler;
 pub mod download;
 pub mod error;
 pub mod event;
+pub mod logging;
 pub mod preview;
+pub mod runtime;
 pub mod s3;
 pub mod search;
 pub mod ui;

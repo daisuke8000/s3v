@@ -2,6 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::command::Command;
 use crate::preview::PreviewContent;
+use crate::s3::{S3Item, S3Path};
 
 use super::{App, BannerState, Mode, download, handle_text_input};
 
@@ -42,8 +43,10 @@ impl App {
             KeyCode::Char('a') => (self.toggle_select_all(), vec![]),
             KeyCode::Char('/') => (self.enter_filter_mode(), vec![]),
             KeyCode::Char('d') => self.start_download(),
+            KeyCode::Char('y') => self.copy_s3_uri(),
+            KeyCode::Char('Y') => self.copy_https_url(),
             KeyCode::Char('?') => {
-                let bucket = self.current_path.bucket.clone().unwrap_or_default();
+                let bucket = self.current_bucket();
                 let prefix = self.current_path.prefix.clone();
                 (
                     Self {
@@ -242,6 +245,33 @@ impl App {
                 vec![Command::CancelDownload],
             ),
             _ => (self, vec![]),
+        }
+    }
+
+    pub fn item_to_s3_path(&self, item: &S3Item) -> S3Path {
+        let bucket = self.current_bucket();
+        match item {
+            S3Item::Bucket { name } => S3Path::bucket(name),
+            S3Item::Folder { prefix, .. } => S3Path::with_prefix(&bucket, prefix),
+            S3Item::File { key, .. } => S3Path::with_prefix(&bucket, key),
+        }
+    }
+
+    fn copy_s3_uri(self) -> (Self, Vec<Command>) {
+        if let Some(item) = self.selected_item().cloned() {
+            let uri = self.item_to_s3_path(&item).to_s3_uri();
+            (self, vec![Command::CopyToClipboard(uri)])
+        } else {
+            (self, vec![])
+        }
+    }
+
+    fn copy_https_url(self) -> (Self, Vec<Command>) {
+        if let Some(item) = self.selected_item().cloned() {
+            let url = self.item_to_s3_path(&item).to_https_url(&self.region);
+            (self, vec![Command::CopyToClipboard(url)])
+        } else {
+            (self, vec![])
         }
     }
 

@@ -28,5 +28,12 @@ mupdf = "0.6"
 shellexpand = "3"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 
+# Clipboard
+arboard = "3"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
 [dev-dependencies]
 tempfile = "3"
