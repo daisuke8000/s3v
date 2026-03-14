@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
+use tokio::sync::mpsc;
+
+use crate::event::Event;
 use crate::s3::{S3Item, S3Path};
 
 const CACHE_TTL: Duration = Duration::from_secs(60);
@@ -88,5 +91,51 @@ impl RuntimeState {
             return true;
         }
         false
+    }
+}
+
+// ── Debounce ──
+
+/// デバウンス状態（プレビュー要求のタイマー管理）
+#[derive(Default)]
+pub struct DebounceState {
+    pub pending_key: Option<String>,
+    pub pending_bucket: String,
+    pub pending_obj_key: String,
+    timer_handle: Option<tokio::task::JoinHandle<()>>,
+}
+
+impl DebounceState {
+    pub fn new() -> Self {
+        Self {
+            pending_key: None,
+            pending_bucket: String::new(),
+            pending_obj_key: String::new(),
+            timer_handle: None,
+        }
+    }
+
+    /// 新しいデバウンス要求をセット（前のタイマーをキャンセル）
+    pub fn schedule(
+        &mut self,
+        debounce_key: String,
+        bucket: String,
+        obj_key: String,
+        debounce_tx: mpsc::UnboundedSender<Event>,
+    ) {
+        if let Some(handle) = self.timer_handle.take() {
+            handle.abort();
+        }
+
+        self.pending_key = Some(debounce_key.clone());
+        self.pending_bucket = bucket;
+        self.pending_obj_key = obj_key;
+
+        let handle = tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            let _ = debounce_tx.send(Event::DebounceTimeout { debounce_key });
+        });
+
+        self.timer_handle = Some(handle);
     }
 }

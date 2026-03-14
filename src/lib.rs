@@ -2,6 +2,7 @@ pub mod app;
 pub mod cli;
 pub mod clipboard;
 pub mod command;
+pub mod command_executor;
 pub mod command_handler;
 pub mod download;
 pub mod error;
