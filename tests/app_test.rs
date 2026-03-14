@@ -36,7 +36,10 @@ fn test_app_items_loaded() {
         },
     ];
 
-    let (app, cmds) = app.handle_event(Event::ItemsLoaded(items));
+    let (app, cmds) = app.handle_event(Event::ItemsLoaded {
+        items,
+        next_token: None,
+    });
     assert_eq!(app.items.len(), 2);
     assert_eq!(app.cursor, 0);
     assert_eq!(app.mode, Mode::Normal);
@@ -409,11 +412,18 @@ fn test_selection_cleared_on_navigation() {
 #[test]
 fn test_search_mode_entry() {
     let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
     app.mode = Mode::Normal;
 
-    let (app, _) = app.handle_event(Event::Key(key_event(KeyCode::Char('?'))));
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('?'))));
     assert_eq!(app.mode, Mode::Search);
     assert!(app.search_query.is_empty());
+    assert!(app.indexing_in_progress);
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::IndexMetadata { .. })),
+        "Expected IndexMetadata command on ? key"
+    );
 }
 
 #[test]
@@ -460,21 +470,21 @@ fn test_search_results_loaded() {
 fn test_metadata_indexed() {
     let app = app_without_banner();
     let (app, _) = app.handle_event(Event::MetadataIndexed(42));
-    assert!(app.metadata_indexed);
-    assert_eq!(app.metadata_count, 42);
+    assert!(!app.indexing_in_progress);
+    assert_eq!(app.indexing_count, 42);
 }
 
 #[test]
 fn test_search_rejects_semicolon() {
     let index = s3v::search::MetadataIndex::new().unwrap();
-    let result = index.search("1=1; DROP TABLE objects");
+    let result = index.search("", "1=1; DROP TABLE objects");
     assert!(result.is_err());
 }
 
 #[test]
 fn test_search_rejects_multiple_statements() {
     let index = s3v::search::MetadataIndex::new().unwrap();
-    let result = index.search("1=1; SELECT * FROM objects");
+    let result = index.search("", "1=1; SELECT * FROM objects");
     assert!(result.is_err());
 }
 
@@ -592,7 +602,7 @@ fn test_search_valid_where_clause() {
         last_modified: None,
     }];
     index.insert_items(&items).unwrap();
-    let result = index.search("name LIKE '%test%'").unwrap();
+    let result = index.search("", "name LIKE '%test%'").unwrap();
     assert_eq!(result.len(), 1);
 }
 
@@ -931,4 +941,167 @@ fn test_download_multiple_files_selected() {
         }
         other => panic!("Expected MultipleFiles, got {:?}", other),
     }
+}
+
+// --- Pagination Tests ---
+
+#[test]
+fn test_more_items_loaded_appends() {
+    let mut app = app_without_banner();
+    app.items = vec![S3Item::File {
+        name: "a.txt".into(),
+        key: "a.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.cursor = 0;
+    app.mode = Mode::Normal;
+
+    let more_items = vec![S3Item::File {
+        name: "b.txt".into(),
+        key: "b.txt".into(),
+        size: 200,
+        last_modified: None,
+    }];
+
+    let (app, _) = app.handle_event(Event::MoreItemsLoaded {
+        items: more_items,
+        next_token: Some("token123".into()),
+    });
+    assert_eq!(app.items.len(), 2);
+    assert_eq!(app.cursor, 1); // カーソルは末尾にいたので1つ進む
+    assert!(app.has_more);
+    assert_eq!(app.continuation_token, Some("token123".into()));
+}
+
+#[test]
+fn test_more_items_loaded_last_page() {
+    let mut app = app_without_banner();
+    app.items = vec![S3Item::File {
+        name: "a.txt".into(),
+        key: "a.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.has_more = true;
+    app.continuation_token = Some("old-token".into());
+
+    let (app, _) = app.handle_event(Event::MoreItemsLoaded {
+        items: vec![S3Item::File {
+            name: "b.txt".into(),
+            key: "b.txt".into(),
+            size: 200,
+            last_modified: None,
+        }],
+        next_token: None,
+    });
+    assert_eq!(app.items.len(), 2);
+    assert!(!app.has_more);
+    assert!(app.continuation_token.is_none());
+}
+
+#[test]
+fn test_cursor_end_triggers_load_more() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.items = vec![S3Item::File {
+        name: "a.txt".into(),
+        key: "a.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.cursor = 0;
+    app.mode = Mode::Normal;
+    app.continuation_token = Some("next-token".into());
+    app.has_more = true;
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Down)));
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::LoadMore { .. })),
+        "Expected LoadMore command when cursor at end with has_more"
+    );
+    assert!(!app.has_more, "has_more should be false during loading");
+}
+
+#[test]
+fn test_cursor_end_no_load_more_without_token() {
+    let mut app = app_without_banner();
+    app.items = vec![S3Item::File {
+        name: "a.txt".into(),
+        key: "a.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    app.cursor = 0;
+    app.mode = Mode::Normal;
+    app.continuation_token = None;
+    app.has_more = false;
+
+    let (_, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Down)));
+    assert!(
+        !cmds
+            .iter()
+            .any(|cmd| matches!(cmd, Command::LoadMore { .. })),
+        "Should not issue LoadMore without continuation_token"
+    );
+}
+
+#[test]
+fn test_search_mode_issues_index_metadata() {
+    let mut app = app_without_banner();
+    app.current_path = S3Path::bucket("my-bucket");
+    app.mode = Mode::Normal;
+
+    let (app, cmds) = app.handle_event(Event::Key(key_event(KeyCode::Char('?'))));
+    assert_eq!(app.mode, Mode::Search);
+    assert!(app.search_query.is_empty());
+    assert!(app.indexing_in_progress);
+    assert!(
+        cmds.iter()
+            .any(|cmd| matches!(cmd, Command::IndexMetadata { .. })),
+        "Expected IndexMetadata command on ? key"
+    );
+}
+
+// --- MetadataIndex Persistence Tests ---
+
+#[test]
+fn test_metadata_index_file_based() {
+    let dir = tempfile::tempdir().unwrap();
+    let db_path = dir.path().join("test-bucket.db");
+    let index = s3v::search::MetadataIndex::open_path(&db_path).unwrap();
+    let items = vec![S3Item::File {
+        name: "test.txt".into(),
+        key: "folder/test.txt".into(),
+        size: 100,
+        last_modified: None,
+    }];
+    index.insert_items(&items).unwrap();
+    let result = index.search("folder/", "name LIKE '%test%'").unwrap();
+    assert_eq!(result.len(), 1);
+
+    // 再度開いてもデータが残っている
+    drop(index);
+    let index2 = s3v::search::MetadataIndex::open_path(&db_path).unwrap();
+    let result2 = index2.search("folder/", "name LIKE '%test%'").unwrap();
+    assert_eq!(result2.len(), 1);
+}
+
+#[test]
+fn test_prefix_coverage() {
+    let dir = tempfile::tempdir().unwrap();
+    let db_path = dir.path().join("test-bucket.db");
+    let index = s3v::search::MetadataIndex::open_path(&db_path).unwrap();
+
+    assert!(!index.is_prefix_covered("logs/2026/").unwrap());
+
+    index.mark_prefix_indexed("logs/2026/").unwrap();
+    assert!(index.is_prefix_covered("logs/2026/").unwrap());
+
+    // 子 prefix も親でカバーされる
+    assert!(index.is_prefix_covered("logs/2026/03/").unwrap());
+
+    // 別 prefix はカバーされない
+    assert!(!index.is_prefix_covered("data/").unwrap());
 }

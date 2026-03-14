@@ -78,8 +78,8 @@ pub fn start_debounced_preview(
         tokio::spawn(async move {
             let path = crate::s3::S3Path::with_prefix(&bucket, &prefix);
             match s3_client.list(&path).await {
-                Ok(items) => {
-                    let _ = tx.send(Event::FolderPreviewLoaded(items));
+                Ok(result) => {
+                    let _ = tx.send(Event::FolderPreviewLoaded(result.items));
                 }
                 Err(e) => {
                     let _ = tx.send(Event::Error(crate::error::user_error(
@@ -97,8 +97,8 @@ pub fn start_debounced_preview(
         tokio::spawn(async move {
             let path = crate::s3::S3Path::bucket(&bucket_name);
             match s3_client.list(&path).await {
-                Ok(items) => {
-                    let _ = tx.send(Event::FolderPreviewLoaded(items));
+                Ok(result) => {
+                    let _ = tx.send(Event::FolderPreviewLoaded(result.items));
                 }
                 Err(e) => {
                     let _ = tx.send(Event::Error(crate::error::user_error(

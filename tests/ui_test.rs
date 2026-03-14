@@ -44,7 +44,10 @@ fn test_ui_renders_normal_after_banner_dismissed() {
             name: "my-bucket-2".to_string(),
         },
     ];
-    let (new_app, _) = app.handle_event(Event::ItemsLoaded(items));
+    let (new_app, _) = app.handle_event(Event::ItemsLoaded {
+        items,
+        next_token: None,
+    });
     app = new_app;
     app.banner_state = s3v::BannerState::Active; // キー押下でバナーが閉じた状態をシミュレート
 

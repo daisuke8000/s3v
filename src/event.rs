@@ -8,8 +8,18 @@ use crate::s3::S3Item;
 pub enum Event {
     /// キー入力
     Key(KeyEvent),
-    /// アイテム一覧の読み込み完了
-    ItemsLoaded(Vec<S3Item>),
+    /// アイテム一覧の読み込み完了（ページネーション対応）
+    ItemsLoaded {
+        items: Vec<S3Item>,
+        next_token: Option<String>,
+    },
+    /// 追加ページの読み込み完了
+    MoreItemsLoaded {
+        items: Vec<S3Item>,
+        next_token: Option<String>,
+    },
+    /// インデックス構築進捗
+    IndexingProgress { indexed_count: usize },
     /// プレビューの読み込み完了
     PreviewLoaded(PreviewContent),
     /// 検索結果

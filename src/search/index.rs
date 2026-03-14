@@ -1,16 +1,47 @@
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
 use rusqlite::{Connection, params};
 
 use crate::error::{Result, S3vError};
 use crate::s3::S3Item;
 
 pub struct MetadataIndex {
-    conn: Connection,
+    conn: Mutex<Connection>,
 }
 
 impl MetadataIndex {
+    /// バケット名からキャッシュパスを決定して開く
+    pub fn open(bucket: &str) -> Result<Self> {
+        let path = cache_path(bucket);
+        Self::open_path(&path)
+    }
+
+    /// 指定パスで開く（テスト用にも使用）
+    pub fn open_path(path: &Path) -> Result<Self> {
+        let conn = Connection::open(path)
+            .or_else(|_| Connection::open_in_memory())
+            .map_err(|e| S3vError::Search(e.to_string()))?;
+
+        let index = Self {
+            conn: Mutex::new(conn),
+        };
+        index.create_tables()?;
+        Ok(index)
+    }
+
+    /// インメモリで開く（後方互換 + フォールバック）
     pub fn new() -> Result<Self> {
         let conn = Connection::open_in_memory().map_err(|e| S3vError::Search(e.to_string()))?;
+        let index = Self {
+            conn: Mutex::new(conn),
+        };
+        index.create_tables()?;
+        Ok(index)
+    }
 
+    fn create_tables(&self) -> Result<()> {
+        let conn = self.lock()?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS objects (
                 key       TEXT PRIMARY KEY,
@@ -23,17 +54,26 @@ impl MetadataIndex {
             );
             CREATE INDEX IF NOT EXISTS idx_name ON objects(name);
             CREATE INDEX IF NOT EXISTS idx_modified ON objects(modified);
-            CREATE INDEX IF NOT EXISTS idx_extension ON objects(extension);",
+            CREATE INDEX IF NOT EXISTS idx_extension ON objects(extension);
+            CREATE TABLE IF NOT EXISTS indexed_prefixes (
+                prefix     TEXT PRIMARY KEY,
+                indexed_at TEXT NOT NULL
+            );",
         )
         .map_err(|e| S3vError::Search(e.to_string()))?;
+        Ok(())
+    }
 
-        Ok(Self { conn })
+    fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
+        self.conn
+            .lock()
+            .map_err(|e| S3vError::Search(e.to_string()))
     }
 
     pub fn insert_items(&self, items: &[S3Item]) -> Result<usize> {
         let mut count = 0;
-        let tx = self
-            .conn
+        let conn = self.lock()?;
+        let tx = conn
             .unchecked_transaction()
             .map_err(|e| S3vError::Search(e.to_string()))?;
 
@@ -89,21 +129,47 @@ impl MetadataIndex {
         Ok(count)
     }
 
-    pub fn search(&self, where_clause: &str) -> Result<Vec<S3Item>> {
+    /// prefix がインデックス済みか確認（親 prefix も含めて）
+    pub fn is_prefix_covered(&self, prefix: &str) -> Result<bool> {
+        let conn = self.lock()?;
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM indexed_prefixes WHERE prefix != '' AND ?1 LIKE prefix || '%'",
+                params![prefix],
+                |row| row.get(0),
+            )
+            .map_err(|e| S3vError::Search(e.to_string()))?;
+        Ok(count > 0)
+    }
+
+    /// prefix をインデックス済みとして記録
+    pub fn mark_prefix_indexed(&self, prefix: &str) -> Result<()> {
+        let conn = self.lock()?;
+        conn.execute(
+            "INSERT OR REPLACE INTO indexed_prefixes (prefix, indexed_at) VALUES (?1, datetime('now'))",
+            params![prefix],
+        )
+        .map_err(|e| S3vError::Search(e.to_string()))?;
+        Ok(())
+    }
+
+    /// 指定 prefix 配下を検索
+    pub fn search(&self, prefix: &str, where_clause: &str) -> Result<Vec<S3Item>> {
         validate_where_clause(where_clause)?;
 
         let sql = format!(
-            "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE {}",
+            "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE key LIKE ?1 AND ({})",
             where_clause
         );
 
-        let mut stmt = self
-            .conn
+        let conn = self.lock()?;
+        let like_pattern = format!("{}%", prefix);
+        let mut stmt = conn
             .prepare(&sql)
             .map_err(|_| S3vError::Search("Invalid SQL query".to_string()))?;
 
         let items = stmt
-            .query_map([], |row| {
+            .query_map(params![like_pattern], |row| {
                 let is_folder: bool = row.get(5)?;
                 let key: String = row.get(0)?;
                 let name: String = row.get(1)?;
@@ -129,6 +195,16 @@ impl MetadataIndex {
         }
         Ok(result)
     }
+}
+
+fn cache_path(bucket: &str) -> PathBuf {
+    let cache_dir = dirs::cache_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("s3v");
+    if let Err(e) = std::fs::create_dir_all(&cache_dir) {
+        eprintln!("Warning: cannot create cache directory: {}", e);
+    }
+    cache_dir.join(format!("{}.db", bucket))
 }
 
 /// WHERE 句の入力を検証し、危険なキーワードを拒否する

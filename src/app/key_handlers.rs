@@ -42,7 +42,19 @@ impl App {
             KeyCode::Char('a') => (self.toggle_select_all(), vec![]),
             KeyCode::Char('/') => (self.enter_filter_mode(), vec![]),
             KeyCode::Char('d') => self.start_download(),
-            KeyCode::Char('?') => (self.enter_search_mode(), vec![]),
+            KeyCode::Char('?') => {
+                let bucket = self.current_path.bucket.clone().unwrap_or_default();
+                let prefix = self.current_path.prefix.clone();
+                (
+                    Self {
+                        mode: Mode::Search,
+                        search_query: String::new(),
+                        indexing_in_progress: true,
+                        ..self
+                    },
+                    vec![Command::IndexMetadata { bucket, prefix }],
+                )
+            }
             KeyCode::Tab => {
                 // プレビューコンテンツがある場合は PreviewFocus に切替
                 if self.preview_content.is_some() {

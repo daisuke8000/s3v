@@ -33,7 +33,9 @@ pub enum Command {
     /// ファイルのプレビューを読み込み
     LoadPreview { bucket: String, key: String },
     /// メタデータインデックスを構築
-    IndexMetadata { bucket: String },
+    IndexMetadata { bucket: String, prefix: String },
+    /// 次ページ読み込み（遅延読み込み）
+    LoadMore { path: S3Path, token: String },
     /// SQL 検索を実行
     ExecuteSearch(String),
     /// アプリケーション終了

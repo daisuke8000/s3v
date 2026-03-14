@@ -15,4 +15,4 @@ pub use cli::Cli;
 pub use command::Command;
 pub use error::{Result, S3vError};
 pub use event::Event;
-pub use s3::{S3Client, S3Item, S3Path};
+pub use s3::{ListResult, S3Client, S3Item, S3Path};

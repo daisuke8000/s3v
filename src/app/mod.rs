@@ -68,10 +68,14 @@ pub struct App {
     pub preview_scroll: u16,
     /// 検索クエリ
     pub search_query: String,
-    /// メタデータインデックス済みフラグ
-    pub metadata_indexed: bool,
-    /// インデックス済みオブジェクト数
-    pub metadata_count: usize,
+    /// 次ページの continuation token
+    pub continuation_token: Option<String>,
+    /// まだ読み込み可能なアイテムがあるか
+    pub has_more: bool,
+    /// インデックス構築中フラグ
+    pub indexing_in_progress: bool,
+    /// インデックス構築済みオブジェクト数（進捗表示用）
+    pub indexing_count: usize,
     /// エラーメッセージ（UI に表示）
     pub error_message: Option<String>,
     /// 成功メッセージ（UI に表示）
@@ -138,8 +142,10 @@ impl App {
             preview_content: None,
             preview_scroll: 0,
             search_query: String::new(),
-            metadata_indexed: false,
-            metadata_count: 0,
+            continuation_token: None,
+            has_more: false,
+            indexing_in_progress: false,
+            indexing_count: 0,
             error_message: None,
             status_message: None,
             parent_items: Vec::new(),
@@ -161,7 +167,34 @@ impl App {
     pub fn handle_event(self, event: Event) -> (Self, Vec<Command>) {
         match event {
             Event::Key(key) => self.handle_key(key),
-            Event::ItemsLoaded(items) => self.handle_items_loaded(items),
+            Event::ItemsLoaded { items, next_token } => self.handle_items_loaded(items, next_token),
+            Event::MoreItemsLoaded { items, next_token } => {
+                let was_at_end = self.cursor + 1 >= self.items.len() && !self.items.is_empty();
+                let old_cursor = self.cursor;
+                let mut all_items = self.items;
+                all_items.extend(items);
+                let cursor = if was_at_end && old_cursor + 1 < all_items.len() {
+                    old_cursor + 1
+                } else {
+                    old_cursor
+                };
+                let mut new_self = Self {
+                    items: all_items,
+                    cursor,
+                    continuation_token: next_token.clone(),
+                    has_more: next_token.is_some(),
+                    ..self
+                };
+                let cmds = new_self.build_auto_preview_commands();
+                (new_self, cmds)
+            }
+            Event::IndexingProgress { indexed_count } => (
+                Self {
+                    indexing_count: indexed_count,
+                    ..self
+                },
+                vec![],
+            ),
             Event::PreviewLoaded(content) => {
                 // Enter キー経由（Loading）なら PreviewFocus、自動プレビューなら現モード維持
                 let mode = if self.mode == Mode::Loading {
@@ -190,8 +223,8 @@ impl App {
             ),
             Event::MetadataIndexed(count) => (
                 Self {
-                    metadata_indexed: true,
-                    metadata_count: count,
+                    indexing_in_progress: false,
+                    indexing_count: count,
                     ..self
                 },
                 vec![],
@@ -389,7 +422,11 @@ impl App {
         }
     }
 
-    fn handle_items_loaded(self, items: Vec<S3Item>) -> (Self, Vec<Command>) {
+    fn handle_items_loaded(
+        self,
+        items: Vec<S3Item>,
+        next_token: Option<String>,
+    ) -> (Self, Vec<Command>) {
         (
             Self {
                 items,
@@ -401,6 +438,8 @@ impl App {
                 all_items: Vec::new(),
                 folder_preview_items: Vec::new(),
                 preview_content: None,
+                continuation_token: next_token.clone(),
+                has_more: next_token.is_some(),
                 ..self
             },
             vec![],

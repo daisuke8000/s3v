@@ -42,8 +42,25 @@ pub fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
     } else {
         let text = match app.mode {
             Mode::Filter => format!(" /{}", app.filter),
-            Mode::Search => format!(" SQL> {}", app.search_query),
-            _ => format!(" {}", url),
+            Mode::Search => {
+                if app.indexing_in_progress {
+                    format!(
+                        " SQL> {}  [Indexing... {}]",
+                        app.search_query, app.indexing_count
+                    )
+                } else {
+                    format!(" SQL> {}", app.search_query)
+                }
+            }
+            _ => {
+                if app.has_more {
+                    format!(" {} ({} items, more available)", url, app.items.len())
+                } else if !app.items.is_empty() {
+                    format!(" {} ({} items)", url, app.items.len())
+                } else {
+                    format!(" {}", url)
+                }
+            }
         };
         (text, t.url_fg)
     };

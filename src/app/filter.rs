@@ -56,12 +56,4 @@ impl App {
             ..self
         }
     }
-
-    pub(crate) fn enter_search_mode(self) -> Self {
-        Self {
-            mode: Mode::Search,
-            search_query: String::new(),
-            ..self
-        }
-    }
 }

@@ -65,9 +65,14 @@ fn build_breadcrumb(app: &App) -> Line<'static> {
         ));
     }
 
-    if app.metadata_indexed {
+    if app.indexing_in_progress {
         spans.push(Span::styled(
-            format!("  [{} indexed]", app.metadata_count),
+            format!("  [indexing... {}]", app.indexing_count),
+            Style::default().fg(t.size_fg),
+        ));
+    } else if app.indexing_count > 0 {
+        spans.push(Span::styled(
+            format!("  [{} indexed]", app.indexing_count),
             Style::default().fg(t.size_fg),
         ));
     }

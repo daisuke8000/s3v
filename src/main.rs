@@ -117,8 +117,27 @@ async fn main() -> anyhow::Result<()> {
     terminal.draw(|f| s3v::ui::render(&app, f, None))?;
 
     // 初期ロード
-    let initial_items = s3_client.list(&initial_path).await.unwrap_or_default();
-    dispatch_event(&mut app, Event::ItemsLoaded(initial_items));
+    let initial_result = s3_client.list(&initial_path).await;
+    match initial_result {
+        Ok(result) => {
+            dispatch_event(
+                &mut app,
+                Event::ItemsLoaded {
+                    items: result.items,
+                    next_token: result.next_token,
+                },
+            );
+        }
+        Err(_) => {
+            dispatch_event(
+                &mut app,
+                Event::ItemsLoaded {
+                    items: Vec::new(),
+                    next_token: None,
+                },
+            );
+        }
+    }
 
     // メインループ
     let result = run_app(&mut terminal, &mut app, &s3_client, &mut picker).await;
@@ -138,7 +157,8 @@ async fn run_app(
     picker: &mut Picker,
 ) -> anyhow::Result<()> {
     let mut preview = PreviewState::new();
-    let mut metadata_index: Option<s3v::search::MetadataIndex> = None;
+    let mut metadata_index: Option<Arc<s3v::search::MetadataIndex>> = None;
+    let mut indexing_prefix: Option<String> = None;
     let mut debounce = DebounceState::new();
 
     // ストリーミングイベント用チャネル
@@ -177,8 +197,15 @@ async fn run_app(
                         &bucket, &obj_key, &dk, &stream_tx,
                     );
                 }
+                // インデックス構築完了 or エラー時に indexing_prefix をクリア
+                if matches!(
+                    &stream_event,
+                    Event::MetadataIndexed(_) | Event::Error(_)
+                ) {
+                    indexing_prefix = None;
+                }
                 let cmds = dispatch_event(app, stream_event);
-                handle_commands(app, s3_client, &mut preview, &mut metadata_index, &stream_tx, &mut debounce, cmds).await?;
+                handle_commands(app, s3_client, &mut preview, &mut metadata_index, &mut indexing_prefix, &stream_tx, &mut debounce, cmds).await?;
             }
             Some(Ok(crossterm_event)) = event_stream.next() => {
                 if let crossterm::event::Event::Key(key) = crossterm_event {
@@ -210,7 +237,7 @@ async fn run_app(
                         terminal.draw(|f| s3v::ui::render(app, f, preview.image_state.as_mut()))?;
                     }
 
-                    handle_commands(app, s3_client, &mut preview, &mut metadata_index, &stream_tx, &mut debounce, cmds).await?;
+                    handle_commands(app, s3_client, &mut preview, &mut metadata_index, &mut indexing_prefix, &stream_tx, &mut debounce, cmds).await?;
                 }
             }
         }
@@ -224,11 +251,13 @@ async fn run_app(
 }
 
 /// コマンド実行（副作用はここで処理）
+#[allow(clippy::too_many_arguments)]
 async fn handle_commands(
     app: &mut App,
     s3_client: &S3Client,
     preview: &mut PreviewState,
-    metadata_index: &mut Option<s3v::search::MetadataIndex>,
+    metadata_index: &mut Option<Arc<s3v::search::MetadataIndex>>,
+    indexing_prefix: &mut Option<String>,
     stream_tx: &mpsc::UnboundedSender<Event>,
     debounce: &mut DebounceState,
     cmds: Vec<Command>,
@@ -239,6 +268,7 @@ async fn handle_commands(
             s3_client,
             preview,
             metadata_index,
+            indexing_prefix,
             stream_tx,
             debounce,
             cmd,
@@ -248,11 +278,13 @@ async fn handle_commands(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_single_command<'a>(
     app: &'a mut App,
     s3_client: &'a S3Client,
     preview: &'a mut PreviewState,
-    metadata_index: &'a mut Option<s3v::search::MetadataIndex>,
+    metadata_index: &'a mut Option<Arc<s3v::search::MetadataIndex>>,
+    indexing_prefix: &'a mut Option<String>,
     stream_tx: &'a mpsc::UnboundedSender<Event>,
     debounce: &'a mut DebounceState,
     cmd: Command,
@@ -364,19 +396,14 @@ fn handle_single_command<'a>(
             }
             Command::LoadItems(path) => {
                 match s3_client.list(&path).await {
-                    Ok(items) => {
-                        dispatch_event(app, Event::ItemsLoaded(items));
-
-                        // バケットに入った時にメタデータインデックスを構築
-                        if let Some(bucket) = &app.current_path.bucket
-                            && !app.metadata_indexed
-                            && let Ok(all_items) = s3_client.list_all_objects(bucket).await
-                            && let Ok(index) = s3v::search::MetadataIndex::new()
-                            && let Ok(count) = index.insert_items(&all_items)
-                        {
-                            *metadata_index = Some(index);
-                            dispatch_event(app, Event::MetadataIndexed(count));
-                        }
+                    Ok(result) => {
+                        dispatch_event(
+                            app,
+                            Event::ItemsLoaded {
+                                items: result.items,
+                                next_token: result.next_token,
+                            },
+                        );
 
                         // アイテム読み込み後、カーソル位置の自動プレビューをトリガー
                         let auto_cmds = {
@@ -391,6 +418,7 @@ fn handle_single_command<'a>(
                                 s3_client,
                                 preview,
                                 metadata_index,
+                                indexing_prefix,
                                 stream_tx,
                                 debounce,
                                 auto_cmd,
@@ -403,12 +431,32 @@ fn handle_single_command<'a>(
                     }
                 }
             }
+            Command::LoadMore { path, token } => {
+                let s3_client = s3_client.clone();
+                let tx = stream_tx.clone();
+                tokio::spawn(async move {
+                    match s3_client.list_objects_continued(&path, &token).await {
+                        Ok(result) => {
+                            let _ = tx.send(Event::MoreItemsLoaded {
+                                items: result.items,
+                                next_token: result.next_token,
+                            });
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Event::Error(s3v::error::user_error(
+                                "Failed to load more items",
+                                e,
+                            )));
+                        }
+                    }
+                });
+            }
             Command::LoadParentItems(path) => {
                 let s3_client = s3_client.clone();
                 let tx = stream_tx.clone();
                 tokio::spawn(async move {
-                    if let Ok(items) = s3_client.list(&path).await {
-                        let _ = tx.send(Event::ParentItemsLoaded(items));
+                    if let Ok(result) = s3_client.list(&path).await {
+                        let _ = tx.send(Event::ParentItemsLoaded(result.items));
                     }
                 });
             }
@@ -417,8 +465,8 @@ fn handle_single_command<'a>(
                 let tx = stream_tx.clone();
                 tokio::spawn(async move {
                     let path = s3v::S3Path::with_prefix(&bucket, &prefix);
-                    if let Ok(items) = s3_client.list(&path).await {
-                        let _ = tx.send(Event::FolderPreviewLoaded(items));
+                    if let Ok(result) = s3_client.list(&path).await {
+                        let _ = tx.send(Event::FolderPreviewLoaded(result.items));
                     }
                 });
             }
@@ -445,14 +493,51 @@ fn handle_single_command<'a>(
                 preview.cancel_stream();
                 app.pending_preview_key = None;
             }
-            Command::IndexMetadata { bucket } => {
-                if let Ok(all_items) = s3_client.list_all_objects(&bucket).await
-                    && let Ok(index) = s3v::search::MetadataIndex::new()
-                    && let Ok(count) = index.insert_items(&all_items)
-                {
-                    *metadata_index = Some(index);
-                    dispatch_event(app, Event::MetadataIndexed(count));
+            Command::IndexMetadata { bucket, prefix } => {
+                // 重複チェック: 同じ prefix が構築中なら無視
+                if indexing_prefix.as_deref() == Some(&prefix) {
+                    return Ok(());
                 }
+
+                // MetadataIndex が未初期化なら開く
+                if metadata_index.is_none() {
+                    match s3v::search::MetadataIndex::open(&bucket) {
+                        Ok(index) => {
+                            *metadata_index = Some(Arc::new(index));
+                        }
+                        Err(e) => {
+                            dispatch_event(
+                                app,
+                                Event::Error(s3v::error::user_error("Index open failed", e)),
+                            );
+                            return Ok(());
+                        }
+                    }
+                }
+                let index = metadata_index.clone().expect("index initialized above");
+
+                // 既にカバー済みなら構築不要
+                if index.is_prefix_covered(&prefix).unwrap_or(false) {
+                    dispatch_event(app, Event::MetadataIndexed(0));
+                    return Ok(());
+                }
+
+                *indexing_prefix = Some(prefix.clone());
+                let s3_client = s3_client.clone();
+                let tx = stream_tx.clone();
+                tokio::spawn(async move {
+                    match s3_client.list_all_files(&bucket, &prefix).await {
+                        Ok(items) => {
+                            let count = index.insert_items(&items).unwrap_or(0);
+                            index.mark_prefix_indexed(&prefix).unwrap_or(());
+                            let _ = tx.send(Event::MetadataIndexed(count));
+                        }
+                        Err(e) => {
+                            let _ =
+                                tx.send(Event::Error(s3v::error::user_error("Index failed", e)));
+                        }
+                    }
+                });
             }
             Command::StartZipDownload {
                 bucket,
@@ -516,20 +601,25 @@ fn handle_single_command<'a>(
                 });
             }
             Command::ExecuteSearch(where_clause) => {
-                if let Some(index) = metadata_index.as_ref() {
-                    match index.search(&where_clause) {
-                        Ok(results) => {
-                            dispatch_event(app, Event::SearchResults(results));
+                if let Some(index) = metadata_index.clone() {
+                    let prefix = app.current_path.prefix.clone();
+                    let tx = stream_tx.clone();
+                    tokio::spawn(async move {
+                        match index.search(&prefix, &where_clause) {
+                            Ok(results) => {
+                                let _ = tx.send(Event::SearchResults(results));
+                            }
+                            Err(e) => {
+                                let _ = tx
+                                    .send(Event::Error(s3v::error::user_error("Search error", e)));
+                            }
                         }
-                        Err(e) => {
-                            dispatch_event(
-                                app,
-                                Event::Error(s3v::error::user_error("Search error", e)),
-                            );
-                        }
-                    }
+                    });
                 } else {
-                    dispatch_event(app, Event::Error("Metadata not indexed yet".to_string()));
+                    dispatch_event(
+                        app,
+                        Event::Error("Index not available. Press ? to build.".to_string()),
+                    );
                 }
             }
         }

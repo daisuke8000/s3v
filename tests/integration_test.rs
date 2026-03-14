@@ -22,7 +22,7 @@ async fn create_localstack_client() -> S3Client {
 #[ignore]
 async fn test_list_buckets() {
     let client = create_localstack_client().await;
-    let items = client.list(&S3Path::root()).await.unwrap();
+    let items = client.list(&S3Path::root()).await.unwrap().items;
 
     assert!(!items.is_empty(), "Should have at least one bucket");
     assert!(
@@ -36,7 +36,7 @@ async fn test_list_buckets() {
 async fn test_list_objects_in_bucket() {
     let client = create_localstack_client().await;
     let path = S3Path::bucket("test-bucket");
-    let items = client.list(&path).await.unwrap();
+    let items = client.list(&path).await.unwrap().items;
 
     // Should have README.md (file) and folder/ (folder)
     assert!(
@@ -57,7 +57,7 @@ async fn test_list_objects_in_bucket() {
 async fn test_list_objects_in_subfolder() {
     let client = create_localstack_client().await;
     let path = S3Path::with_prefix("test-bucket", "folder/");
-    let items = client.list(&path).await.unwrap();
+    let items = client.list(&path).await.unwrap().items;
 
     let has_cargo_toml = items.iter().any(|item| item.name() == "Cargo.toml");
     let has_sub = items.iter().any(|item| item.name() == "sub/");
@@ -71,7 +71,7 @@ async fn test_list_objects_in_subfolder() {
 async fn test_file_has_size() {
     let client = create_localstack_client().await;
     let path = S3Path::bucket("test-bucket");
-    let items = client.list(&path).await.unwrap();
+    let items = client.list(&path).await.unwrap().items;
 
     let readme = items
         .iter()
@@ -91,8 +91,11 @@ async fn test_full_navigation_flow() {
 
     // 1. Start at root - list buckets
     let app = App::new();
-    let buckets = client.list(&app.current_path).await.unwrap();
-    let (app, _) = app.handle_event(Event::ItemsLoaded(buckets));
+    let buckets = client.list(&app.current_path).await.unwrap().items;
+    let (app, _) = app.handle_event(Event::ItemsLoaded {
+        items: buckets,
+        next_token: None,
+    });
     assert_eq!(app.mode, Mode::Normal);
     assert!(!app.items.is_empty());
 
@@ -122,8 +125,11 @@ async fn test_full_navigation_flow() {
         .expect("Expected LoadItems command");
 
     // 3. Load bucket contents
-    let items = client.list(&load_path).await.unwrap();
-    let (app, _) = app.handle_event(Event::ItemsLoaded(items));
+    let items = client.list(&load_path).await.unwrap().items;
+    let (app, _) = app.handle_event(Event::ItemsLoaded {
+        items,
+        next_token: None,
+    });
     assert!(app.items.iter().any(|item| item.name() == "README.md"));
     assert!(app.items.iter().any(|item| item.name() == "folder/"));
 

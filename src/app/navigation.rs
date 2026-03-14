@@ -19,6 +19,17 @@ impl App {
     pub(crate) fn move_cursor_down(self) -> (Self, Vec<Command>) {
         let max = self.items.len().saturating_sub(1);
         if self.cursor >= max {
+            // 末尾到達 + まだ続きがある → LoadMore 発行
+            if let Some(token) = self.continuation_token.clone() {
+                let path = self.current_path.clone();
+                return (
+                    Self {
+                        has_more: false, // 読み込み中は false にしてリクエスト重複防止
+                        ..self
+                    },
+                    vec![Command::LoadMore { path, token }],
+                );
+            }
             return (self, vec![]);
         }
         let cursor = self.cursor + 1;

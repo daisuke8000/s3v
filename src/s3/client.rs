@@ -6,6 +6,13 @@ use crate::s3::{S3Item, S3Path};
 /// オブジェクト列挙の上限（メモリ保護）
 const MAX_LIST_ITEMS: usize = 100_000;
 
+/// ページネーション付きリスト結果
+#[derive(Debug, Clone)]
+pub struct ListResult {
+    pub items: Vec<S3Item>,
+    pub next_token: Option<String>,
+}
+
 #[derive(Clone)]
 pub struct S3Client {
     client: Client,
@@ -41,9 +48,18 @@ impl S3Client {
         Ok(buckets)
     }
 
-    /// 指定パスのオブジェクト一覧を取得する。
-    /// NOTE: ページネーション未対応（最大 1000 件）。Phase 4 で対応予定。
-    pub async fn list_objects(&self, path: &S3Path) -> Result<Vec<S3Item>> {
+    /// 指定パスのオブジェクト一覧を取得する（ページネーション対応）。
+    pub async fn list_objects(&self, path: &S3Path) -> Result<ListResult> {
+        self.list_objects_inner(path, None).await
+    }
+
+    /// continuation token を指定して次ページのオブジェクト一覧を取得する。
+    pub async fn list_objects_continued(&self, path: &S3Path, token: &str) -> Result<ListResult> {
+        self.list_objects_inner(path, Some(token)).await
+    }
+
+    /// list_objects / list_objects_continued の共通実装
+    async fn list_objects_inner(&self, path: &S3Path, token: Option<&str>) -> Result<ListResult> {
         let bucket = path
             .bucket
             .as_ref()
@@ -51,12 +67,18 @@ impl S3Client {
 
         let mut items = Vec::new();
 
-        let resp = self
+        let mut req = self
             .client
             .list_objects_v2()
             .bucket(bucket)
             .prefix(&path.prefix)
-            .delimiter("/")
+            .delimiter("/");
+
+        if let Some(t) = token {
+            req = req.continuation_token(t);
+        }
+
+        let resp = req
             .send()
             .await
             .map_err(|e| S3vError::AwsSdk(e.to_string()))?;
@@ -79,12 +101,22 @@ impl S3Client {
             }
         }
 
-        Ok(items)
+        let next_token = if resp.is_truncated() == Some(true) {
+            resp.next_continuation_token().map(|s| s.to_string())
+        } else {
+            None
+        };
+
+        Ok(ListResult { items, next_token })
     }
 
-    pub async fn list(&self, path: &S3Path) -> Result<Vec<S3Item>> {
+    pub async fn list(&self, path: &S3Path) -> Result<ListResult> {
         if path.is_root() {
-            self.list_buckets().await
+            let items = self.list_buckets().await?;
+            Ok(ListResult {
+                items,
+                next_token: None,
+            })
         } else {
             self.list_objects(path).await
         }
