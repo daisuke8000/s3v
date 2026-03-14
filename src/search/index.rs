@@ -158,7 +158,7 @@ impl MetadataIndex {
         validate_where_clause(where_clause)?;
 
         let sql = format!(
-            "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE key LIKE ?1 AND ({})",
+            "SELECT key, name, prefix, size, modified, is_folder FROM objects WHERE key LIKE ?1 AND ({}) LIMIT 1000",
             where_clause
         );
 
@@ -204,23 +204,108 @@ fn cache_path(bucket: &str) -> PathBuf {
     if let Err(e) = std::fs::create_dir_all(&cache_dir) {
         eprintln!("Warning: cannot create cache directory: {}", e);
     }
-    cache_dir.join(format!("{}.db", bucket))
+    // バケット名のサニタイズ（パストラバーサル防止）
+    let safe_name: String = bucket
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    cache_dir.join(format!("{}.db", safe_name))
 }
 
-/// WHERE 句の入力を検証し、危険なキーワードを拒否する
+/// 許可するカラム名
+const ALLOWED_COLUMNS: &[&str] = &[
+    "name",
+    "key",
+    "prefix",
+    "size",
+    "modified",
+    "extension",
+    "is_folder",
+];
+
+/// 許可する SQL トークン（カラム名・演算子・リテラル・論理演算子のみ）
 fn validate_where_clause(clause: &str) -> Result<()> {
+    if clause.trim().is_empty() {
+        return Err(S3vError::Search("Empty query".to_string()));
+    }
+
     let lower = clause.to_lowercase();
-    let denied = [
-        ";", "--", "/*", "attach", "pragma", "drop", "delete", "insert", "update", "create",
-        "alter", "detach", "reindex", "vacuum",
+
+    // 危険な文字・キーワードを拒否
+    let denied_chars = [";", "--", "/*", "*/", "||"];
+    for ch in &denied_chars {
+        if lower.contains(ch) {
+            return Err(S3vError::Search(format!(
+                "Invalid query: '{}' is not allowed",
+                ch
+            )));
+        }
+    }
+
+    let denied_keywords = [
+        "attach",
+        "pragma",
+        "drop",
+        "delete",
+        "insert",
+        "update",
+        "create",
+        "alter",
+        "detach",
+        "reindex",
+        "vacuum",
+        "select",
+        "union",
+        "into",
+        "exec",
+        "load_extension",
     ];
-    for keyword in &denied {
-        if lower.contains(keyword) {
+    // 単語境界でキーワードを検出（"updated" のような列名を誤検出しない）
+    for keyword in &denied_keywords {
+        let pattern = format!(r"\b{}\b", keyword);
+        if regex::Regex::new(&pattern)
+            .ok()
+            .is_some_and(|re| re.is_match(&lower))
+        {
             return Err(S3vError::Search(format!(
                 "Invalid query: '{}' is not allowed",
                 keyword
             )));
         }
     }
+
+    // 文字列リテラルを除去してから識別子を検証
+    // 'abc' のようなリテラルを空に置換し、残った識別子のみチェック
+    let stripped = regex::Regex::new(r"'[^']*'")
+        .map_err(|e| S3vError::Search(e.to_string()))?
+        .replace_all(&lower, " ");
+
+    // カラム参照の検証: WHERE 句内のカラム名が許可リストに含まれるか確認
+    let word_re =
+        regex::Regex::new(r"\b([a-z_]+)\b").map_err(|e| S3vError::Search(e.to_string()))?;
+    let allowed_words: &[&str] = &[
+        "and", "or", "not", "like", "glob", "between", "in", "is", "null", "true", "false",
+    ];
+    for cap in word_re.captures_iter(&stripped) {
+        let word = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+        // 数値リテラル、許可カラム名、SQL キーワードのいずれかであればOK
+        if word.chars().all(|c| c.is_ascii_digit())
+            || ALLOWED_COLUMNS.contains(&word)
+            || allowed_words.contains(&word)
+        {
+            continue;
+        }
+        return Err(S3vError::Search(format!(
+            "Invalid query: unknown identifier '{}'",
+            word
+        )));
+    }
+
     Ok(())
 }
